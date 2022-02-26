@@ -1,5 +1,5 @@
 import numpy as np
-from Decomposition import LU, trans_discount_factor_zero_rate, compute_discount_factor
+from Decomposition import LU, EquationSimulation, trans_discount_factor_zero_rate, compute_discount_factor
 
 np.set_printoptions(suppress=True)
 
@@ -140,21 +140,16 @@ if __name__ == "__main__":
     disc_factor = [0.998, 0.9935, 0.982, 0.9775]
     ps = [2, 5, 11, 15]
     zr = [round(i, 6) for i in trans_discount_factor_zero_rate(disc_factor, ps, "month")]
-    # print(zr, "\n")
 
-    lu = LU()
+    lu = EquationSimulation()
     interval = [0, 2 / 12, 5 / 12, 11 / 12, 15 / 12]
-    # print("intv:", interval)
     fx = [0.01] + zr
-    print("fx:\n", fx)
     x, eq = lu.cubic_spline_interpolation(interval, fx)
-    # print("v:\n", lu.b)
 
     res, new_interval = 0, [1 / 12, 4 / 12, 7 / 12, 10 / 12, 13 / 12]
     for i in range(5):
         t = new_interval[i]
         d = compute_discount_factor(t, eq)
-        print(d)
         if i == 4: res += 100 * d
         res += 0.625 * d
     print(res)
@@ -162,9 +157,8 @@ if __name__ == "__main__":
     # # # Question 5
     # fx = [0.005, 0.0065, 0.0085, 0.0105, 0.012]
     #
-    # lu = LU()
+    # lu = EquationSimulation()
     # interval = [0, 2 / 12, 6 / 12, 1, 20 / 12]
-    # # print("intv:", interval)
     # x, eq = lu.cubic_spline_interpolation(interval, fx)
     # print(eq)
     #
@@ -172,7 +166,6 @@ if __name__ == "__main__":
     # for i in range(5):
     #     t = new_interval[i]
     #     d = compute_discount_factor(t, eq)
-    #     print(d)
     #     if i == 4: res += 100 * d
     #     res += 0.75 * d
     # print(res)

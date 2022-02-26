@@ -170,7 +170,7 @@ class LU:
             return self.backward_substitution(M, b) if M is not None else self.forward_substitution(b)
 
     def _dfc_rp(self, P=None, b=None):
-        if self.b is None: raise EOFError("Please give the vector b.")
+        if self.b is None and b is None: raise EOFError("Please give the vector b.")
         if b is None: b = deepcopy(self.b)
         if P is None:
             if self.P is None: self.lu_row_pivoting()
@@ -209,6 +209,13 @@ class LU:
             LS[:, i] = x
         res = [list(LS[row, :]) for row in range(s)]
         return res
+
+
+class EquationSimulation(LU):
+    def __init__(self):
+        super().__init__()
+        self.M = None
+        self.v = None
 
     def _interpolation_matrix(self, intervals: list):
         """
@@ -256,9 +263,9 @@ class LU:
         M[-2][-2] = intervals[n] * intervals[n]
         M[-2][-1] = intervals[n] * intervals[n] * intervals[n]
         M[-1][-2], M[-1][-1] = 2, 6 * intervals[n]
-        return M
+        self.M = M
 
-    def _interpolation_vect(self, f_x: list):
+    def _interpolation_vector(self, f_x: list):
         """
         Generate the linear system for the cubic spline interpolation.
         :param f_x: The value corresponding to each of the intervals.
@@ -273,20 +280,19 @@ class LU:
             val[sec * 4 + 2] = f_x[sec + 1]
             val[sec * 4 + 3], val[sec * 4 + 4] = 0, 0
         val[-3], val[-2], val[-1] = f_x[-2], f_x[-1], 0
-        return val
+        self.v = val
 
     def cubic_spline_interpolation(self, intervals: list, f_x: list):
         """
         To solve the cubic spline interpolation problem.
         :param intervals: The intervals for the problem.
         :param f_x: The value corresponding to each of the intervals.
-        :return: The parameters for the equations in each interval.
+        :return: The parameters for the equations in each interval and the corresponding intervals.
         """
-        M = self._interpolation_matrix(intervals)
-        v = self._interpolation_vect(f_x)
-        self.b = v
-        _ = self.lu_row_pivoting(M)
-        x = self._dfc_rp()
+        self._interpolation_matrix(intervals)
+        self._interpolation_vector(f_x)
+        _ = self.lu_row_pivoting(self.M)
+        x = self._dfc_rp(b=self.v)
         equations = {}
         for i in range(4):
             equations[(intervals[i], (intervals[i + 1]))] = x[i * 4: (i + 1) * 4]
