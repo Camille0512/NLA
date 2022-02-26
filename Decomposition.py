@@ -1,11 +1,21 @@
 from copy import deepcopy
 from numpy.linalg import det
-from numpy import array, dot, diag, zeros, log, exp
+from numpy import array, dot, diag, zeros, log, exp, ones, matrix, append, around, square, sqrt
+
+import MatrixVerifications as v
 
 
 def trans_discount_factor_zero_rate(discount_factor: list, periods: list, period_type: str):
+    """
+    Transform discount factor into spot rate.
+    :param discount_factor: Given discount factor list.
+    :param periods: Given period list.
+    :param period_type: The period type. Could be day, std_day, week, month, semi.
+    :return: Spot rates corresponding to given discount factors.
+    """
     len_df, len_p = len(discount_factor), len(periods)
-    if len_df != len_p: raise ValueError("Wrong input, please check the length of the input lists.")
+    if len_df != len_p:
+        raise ValueError("Wrong input, please check the length of the input lists.")
 
     zero_rate = []
     period_mapping = {
@@ -31,13 +41,14 @@ def compute_discount_factor(t: float, poly_params: dict):
     """
     a, b, c, d = 0, 0, 0, 0
     for (l, r), params in poly_params.items():
-        if l <= t <= r: a, b, c, d = params
+        if l <= t <= r:
+            a, b, c, d = params
     r = a + b * t + c * t * t + d * t * t * t
     return exp(-t * r)
 
 
 class LU:
-    def __init__(self, A=None, L=None, U=None, P=None, b=None, interval=None, interval_value=None):
+    def __init__(self, A=None, L=None, U=None, P=None, b=None):
         self.A = A
         self.L = L
         self.U = U
@@ -54,7 +65,8 @@ class LU:
         Clear the matrix.
         :return: A clean matrix.
         """
-        if self.n is None: print("Error! Please input matrix size.")
+        if self.n is None:
+            raise ValueError("Error! Please input matrix size.")
         return [[0] * self.n for i in range(self.n)]
 
     def forward_substitution(self, L=None, b=None, d=6):
@@ -65,8 +77,10 @@ class LU:
         :param d: The decimal that would like to keep, default is 6 decimals.
         :return: The solved x list.
         """
-        if L is None: L = deepcopy(self.L)
-        if b is None: b = deepcopy(self.b)
+        if L is None:
+            L = deepcopy(self.L)
+        if b is None:
+            b = deepcopy(self.b)
         n = len(L)
         x = [None] * n
         x[0] = b[0] / L[0][0]
@@ -83,8 +97,10 @@ class LU:
         :param d: The decimal that would like to keep, default is 6 decimals.
         :return: The solved x list.
         """
-        if U is None: U = deepcopy(self.U)
-        if b is None: b = deepcopy(self.b)
+        if U is None:
+            U = deepcopy(self.U)
+        if b is None:
+            b = deepcopy(self.b)
         n = len(U) - 1
         x = [None] * (n + 1)
         x[n] = b[n] / U[n][n]
@@ -116,9 +132,12 @@ class LU:
         :return: The LU decomposition, lower triangular matrix L and upper triangular matrix U.
         """
         if A is None:
-            if self.A is None: raise ValueError("Please initiate A or input A for the method.")
+            if self.A is None:
+                raise ValueError("Please initiate A or input A for the method.")
             A = deepcopy(self.A)
-        n = len(A)
+        if self.n is None:
+            self.n = A.shape[0]
+        n = self.n
         verify = 1
         for i in range(1, n + 1):
             arr = array([a[:i] for a in A[:i]]).reshape(i, i)
@@ -142,9 +161,12 @@ class LU:
         :return: The LU decomposition (lower triangular matrix L and upper triangular matrix U), permutation matrix P.
         """
         if A is None:
-            if self.A is None: raise ValueError("Please initiate A or input A for the method.")
+            if self.A is None:
+                raise ValueError("Please initiate A or input A for the method.")
             A = deepcopy(self.A)
-        n = len(A)
+        if self.n is None:
+            self.n = A.shape[0]
+        n = self.n
         if not givenLU: self.L, self.U = self.create_clean_matrix(), self.create_clean_matrix()
         P = [[1 if i == j else 0 for j in range(n)] for i in range(n)]
 
@@ -163,15 +185,18 @@ class LU:
         return self.L, self.U, self.P
 
     def _dfc_tm(self, cate: str, M=None, b=None):
-        if b is None: b = deepcopy(self.b)
+        if b is None:
+            b = deepcopy(self.b)
         if cate.lower() == "fs":
             return self.forward_substitution(M, b) if M is not None else self.forward_substitution(b)
         elif cate.lower() == "bs":
             return self.backward_substitution(M, b) if M is not None else self.forward_substitution(b)
 
     def _dfc_rp(self, P=None, b=None):
-        if self.b is None and b is None: raise EOFError("Please give the vector b.")
-        if b is None: b = deepcopy(self.b)
+        if self.b is None and b is None:
+            raise EOFError("Please give the vector b.")
+        if b is None:
+            b = deepcopy(self.b)
         if P is None:
             if self.P is None: self.lu_row_pivoting()
             P = deepcopy(self.P)
@@ -180,21 +205,31 @@ class LU:
         return self.backward_substitution(b=y)
 
     def compute_discount_factor(self, cate: str, M=None, b=None):
+        """
+        Coumpute discount factors by solving a linear system.
+        :param cate: The method to be used in solving the linear system. Could be "TM" or "RP".
+        :param M: Given matrix corresponding to the left side of the linear system.
+        :param b: Given vector corresponding to the right side of the linear system.
+        :return: The solution (discount factor) for the linear system.
+        """
         cate_list = cate.split("_")
         func = self.discount_factor_comp[cate_list[0]]
         return func(cate_list[1], M, b) if len(cate_list) > 1 is not None else func(M, b)
 
     def compute_linear_system(self, B: list, A=None, givenLU=False):
         """
-        Solve the linear system for the same given matrix.
+        Solve the multiple linear system for the same given matrix.
         :param B: The given results for the linear system (the right side of the equations).
         :param A: The given matrix for the linear system.
         :param givenLU: Whether use the previous given L & U matrix, default False (not use).
-        :return: The solution for the linear system.
+        :return: The solution for the multiple linear system.
         """
         if A is None:
-            if self.A is None: raise ValueError("Please initiate A or input A for the method.")
+            if self.A is None:
+                raise ValueError("Please initiate A or input A for the method.")
             A = deepcopy(self.A)
+        if self.n is None:
+            self.n = self.A.shape[0]
 
         if not givenLU: self.L, self.U = self.create_clean_matrix(), self.create_clean_matrix()
         _, _, P = self.lu_row_pivoting(A=A)
@@ -271,7 +306,8 @@ class EquationSimulation(LU):
         :param f_x: The value corresponding to each of the intervals.
         :return: The matrix to solve the cubic spline interpolation problem.
         """
-        if self.n is None: self.n = len(f_x) * len(f_x)
+        if self.n is None:
+            self.n = len(f_x) * len(f_x)
         val = [0] * self.n
         n = int(self.n ** 0.5)
         val[0] = 0
@@ -297,3 +333,179 @@ class EquationSimulation(LU):
         for i in range(4):
             equations[(intervals[i], (intervals[i + 1]))] = x[i * 4: (i + 1) * 4]
         return x, equations
+
+
+class OnePeriodMarketModel(LU):
+    def __init__(self, init_price_vec=None, states=None, option_info=None):
+        """
+        Initiate the variables.
+        :param init_price_vec (array, list, or pd.Series): The prices of securities at time 0.
+        :param states (array, list, or pd.Series): The states of the following periods.
+        :param option_info (dictionary): The option information. Key is the option type, value is the strike price.
+        """
+        super().__init__()
+        self.init_price_vec = array(init_price_vec).reshape(-1, 1)
+        self.states = array(states).reshape(-1, 1)
+        self.option_info = option_info
+        self.payoff = None
+        self.Q = None
+        self.options = None
+        self.strikes = None
+
+    def __option_info(self, option_info):
+        """
+        Extract the option information, including the put call type and their corresponding strikes.
+        :params option_info: The option(s) information.
+        :return: Option types (put/call), corresponding strikes.
+        """
+        options, strikes = [], []
+        for key, val in option_info.items():
+            options.append(key[0])
+            strikes.append(val)
+        options, strikes = array(options).reshape(-1, 1), array(strikes).reshape(-1, 1)
+        # Calls will be 1, puts will be -1.
+        options = (options == "P") * (-2) + 1
+        return options, strikes
+
+    def _option_payoff_matrix(self, option_info=None, update=True):
+        """
+        Compute the payoff(s) matrix of given information.
+        :params option_info: The option(s) information. Default None.
+        :return: The payoff(s) matrix of given information, options position, strikes, option_info.
+        """
+        if len(self.states.shape) == 1:
+            self.states = array([self.states])
+        states = self.states
+        if option_info is None:
+            option_info = deepcopy(self.option_info)
+        options, strikes = self.__option_info(option_info)
+
+        # Compute the payoff matrix
+        strikes = dot(strikes, ones(states.shape[0]).reshape(1, -1))
+        payoff = options * (states.reshape(1, -1) - strikes)
+        payoff = zeros(strikes.shape) + (payoff > 0) * payoff
+        if update:
+            self.payoff, self.options, self.strikes = payoff, options, strikes
+        return payoff, options, strikes
+
+    @staticmethod
+    def _check_complete(M: matrix):
+        """
+        Check whether the matrix is square and nonsingular.
+        Used in checking the complete market.
+        :params M: The input matrix to be checked whether is complete.
+        :return: Whether the market is complete.
+        """
+        row, col = M.shape
+        if row != col:
+            return False
+        if not v.check_non_singular(M):
+            return False
+        return True
+
+    def _check_arbitrage_free(self, M: matrix, S0: array):
+        """
+        Check whether the given payoff matrix gives a solution all larger than 0.
+        The is to check the matrix of a one period model is arbitrage-free.
+        :param M: The payoff matrix.
+        :param S0: The price vector at time 0.
+        :return: Whether it is arbitrage free.
+        """
+        row, col = M.shape
+        if row != col:
+            raise ValueError("Please input a square matrix")
+
+        # If M is made up of a lower triangular matrix and an upper triangular matrix.
+        options = deepcopy(self.options)
+        cut = sum(options == -1)[0]
+        m1, m2 = M[:cut, :cut], M[cut:, cut:]
+        M, S0 = [list(i) for i in M], list(S0.reshape(1, -1)[0])
+        if v.check_lower_mtx(m1) + v.check_upper_mtx(m1) > 0 and v.check_lower_mtx(m2) + v.check_upper_mtx(m2) > 0:
+            if v.check_lower_mtx(m1):
+                m1, m2 = [list(i) for i in m1], [list(i) for i in m2]
+                q1 = self.forward_substitution(L=m1, b=S0[:cut])
+                q2 = self.backward_substitution(U=m2, b=S0[cut:])
+            else:
+                m1, m2 = [list(i) for i in m1], [list(i) for i in m2]
+                q1 = self.backward_substitution(U=m1, b=S0[:cut])
+                q2 = self.forward_substitution(L=m2, b=S0[cut:])
+            Q = append(q1, q2)
+            self.Q = Q
+            return False if sum(array(Q) < 0) > 0 else True
+
+        # If M is a normal square matrix.
+        lpm = 1
+        for i in range(row):
+            lpm *= i
+        # LU Decomposition
+        if lpm == 0:
+            _ = self.lu_no_pivoting(A=M)
+            b = S0
+        else:
+            _ = self.lu_row_pivoting(A=M)
+            b = list(dot(self.P, S0))
+        # Solve linear system
+        Q = self.compute_discount_factor("RP", M=M, b=b)
+        self.Q = Q
+        return False if sum(array(Q) < 0) > 0 else True
+
+    def option_pricing_model(self, M=None, S0=None):
+        """
+        Option pricing model.
+        :param M: The payoff matrix. Can be computed or given directly.
+        :param S0: The price vector at time 0. Should be given or initiated.
+        :return: The pricing model vector Q.
+        """
+        if M is None:
+            try:
+                M, _, _ = self._option_payoff_matrix()
+            except:
+                raise ValueError("Please either initiate the variables or input payoff matrix.")
+        if S0 is None:
+            S0 = deepcopy(self.init_price_vec)
+        if not self._check_complete(M):
+            raise ValueError("The model is not complete.")
+        if not self._check_arbitrage_free(M, S0):
+            print("Q:", self.Q)
+            raise ValueError("The model is not arbitrage-free.")
+        return self.Q
+
+    def option_pricing(self, option_info: dict, Q=None, d=0):
+        """
+        Option pricing by given option type and strike.
+        :param option_info: The option information. In a dictionary format, key is the option type, value is the strike.
+        :param Q: The pricing model vector.
+        :param d: The number of decimals to be kept.
+        :return: The option price vector corresponding to each states.
+        """
+        if Q is None:
+            Q = deepcopy(self.Q)
+        payoff, options, strikes = self._option_payoff_matrix(option_info, update=False)
+        price = dot(payoff, Q)
+        option_price_info = {}
+        for e, (opt, X) in enumerate(zip(options, strikes)):
+            round_str = ":.{}f".format(d)
+            X = ("{" + round_str + "}").format(X[0])
+            key = ""
+            if opt == 1:
+                key += "C" + str(X)
+            else:
+                key += "P" + str(X)
+            option_price_info[key] = price[e]
+        return option_price_info
+
+    def compute_RMS(self, option_price: dict, Q=None, d=0):
+        """
+        Compute the RMSE of the model estimated price and the real price of the corresponding same option.
+        :param option_price: The option information. In a dictionary format, key is the option type, value is the price.
+        :param Q: The pricing model vector.
+        :param d: The number of decimals to be kept.
+        :return: The root-mean-squared error (RMSE) of the model.
+        """
+        option_info = {k: int(k[1:]) for k in option_price.keys()}
+        model_prices = self.option_pricing(option_info=option_info, Q=Q)
+        mse = 0
+        for k in model_prices.keys():
+            mse += square((model_prices.get(k, 0) - option_price.get(k, 0)) / option_price.get(k, 0))
+        rmse = sqrt(mse / len(option_price.keys()))
+        return rmse
