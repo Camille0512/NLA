@@ -184,11 +184,13 @@ if __name__ == "__main__":
     }
     # Question 5
     model_opt = ["P1175", "P1200", "P1250", "P1350", "C1350", "C1375", "C1450", "C1550", "C1600"]
+    # model_opt = ["P1175", "P1200", "P1300", "P1400", "C1400", "C1450", "C1550", "C1600"]
     securities = {k: float(k[1:]) for k in all_securities.keys() if k in model_opt}
     other_securities = {k: v for k, v in all_securities.items() if k not in model_opt}
 
     St0 = np.array([val for k, val in all_securities.items() if k in model_opt])
     states = [1187.5, 1225, 1300, 1362.5, 1412.5, 1500, 1575]
+    # states = [1180, 1250, 1350, 1425, 1500, 1575]
     f_states, l_states = [800, 950, 1100], [1650, 1700, 1800]
     states_comb = []
     for f in f_states:
@@ -196,14 +198,21 @@ if __name__ == "__main__":
             states_comb.append([f] + states + [l])
     print("State combinations: {}\n{}".format(len(states_comb), states_comb))
 
+    final_result = {}
     for states in states_comb:
-        print("{} - {}".format(states[0], states[-1]))
+        pair = "{} - {}".format(states[0], states[-1])
         opm = OnePeriodMarketModel(init_price_vec=St0, states=states, option_info=securities)
-        Q = opm.option_pricing_model()
-        print("Q:", Q)
-        new_option = {"C1300": 1300}
-        option_price = opm.option_pricing(new_option, Q=Q)
-        print("Option price:", option_price)
+        Q, af = opm.option_pricing_model()
+        final_result[pair] = {"Q": Q, "Arbitrage-free": af}
+        if not af: continue
+
+        rmse = opm.compute_RMS(other_securities)
+        final_result[pair] = round(rmse, 4)
+    print("")
+    for k, v in final_result.items():
+        print(k)
+        print(v)
+        print("")
 
     # # # Question 6
     # model_opt = ["P1200", "P1300", "P1400", "C1400", "C1450", "C1550", "C1600"]

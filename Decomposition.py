@@ -136,7 +136,7 @@ class LU:
                 raise ValueError("Please initiate A or input A for the method.")
             A = deepcopy(self.A)
         if self.n is None:
-            self.n = A.shape[0]
+            self.n = len(A)
         n = self.n
         verify = 1
         for i in range(1, n + 1):
@@ -456,6 +456,7 @@ class OnePeriodMarketModel(LU):
         :param S0: The price vector at time 0. Should be given or initiated.
         :return: The pricing model vector Q.
         """
+        af = True
         if M is None:
             try:
                 M, _, _ = self._option_payoff_matrix()
@@ -466,9 +467,8 @@ class OnePeriodMarketModel(LU):
         if not self._check_complete(M):
             raise ValueError("The model is not complete.")
         if not self._check_arbitrage_free(M, S0):
-            print("Q:", self.Q)
-            raise ValueError("The model is not arbitrage-free.")
-        return self.Q
+            af = False
+        return self.Q, af
 
     def option_pricing(self, option_info: dict, Q=None, d=0):
         """
