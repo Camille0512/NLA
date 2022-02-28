@@ -172,7 +172,7 @@ if __name__ == "__main__":
     #     res += 0.75 * d
     # print(res)
 
-    # For Q5 & Q6
+    # # For Q5 & Q6
     all_securities = {
         "P1175": 46.6, "P1200": 51.55, "P1225": 57.15, "P1250": 63.3, "P1275": 70.15,
         "P1300": 77.7, "P1325": 86.2, "P1350": 95.3, "P1375": 105.3,
@@ -182,37 +182,37 @@ if __name__ == "__main__":
         "C1300": 131.7, "C1325": 115.25, "C1350": 99.55, "C1375": 84.9, "C1400": 71.1,
         "C1425": 58.7, "C1450": 47.25, "C1500": 29.25, "C1550": 15.8, "C1575": 11.1, "C1600": 7.9
     }
-    # Question 5
-    model_opt = ["P1175", "P1200", "P1250", "P1350", "C1350", "C1375", "C1450", "C1550", "C1600"]
+    # # Question 5
+    # # model_opt = ["P1175", "P1200", "P1250", "P1350", "C1350", "C1375", "C1450", "C1550", "C1600"]
     # model_opt = ["P1175", "P1200", "P1300", "P1400", "C1400", "C1450", "C1550", "C1600"]
-    securities = {k: float(k[1:]) for k in all_securities.keys() if k in model_opt}
-    other_securities = {k: v for k, v in all_securities.items() if k not in model_opt}
-
-    St0 = np.array([val for k, val in all_securities.items() if k in model_opt])
-    states = [1187.5, 1225, 1300, 1362.5, 1412.5, 1500, 1575]
-    # states = [1180, 1250, 1350, 1425, 1500, 1575]
-    f_states, l_states = [800, 950, 1100], [1650, 1700, 1800]
-    states_comb = []
-    for f in f_states:
-        for l in l_states:
-            states_comb.append([f] + states + [l])
-    print("State combinations: {}\n{}".format(len(states_comb), states_comb))
-
-    final_result = {}
-    for states in states_comb:
-        pair = "{} - {}".format(states[0], states[-1])
-        opm = OnePeriodMarketModel(init_price_vec=St0, states=states, option_info=securities)
-        Q, af = opm.option_pricing_model()
-        final_result[pair] = {"Q": Q, "Arbitrage-free": af}
-        if not af: continue
-
-        rmse = opm.compute_RMS(other_securities)
-        final_result[pair] = round(rmse, 4)
-    print("")
-    for k, v in final_result.items():
-        print(k)
-        print(v)
-        print("")
+    # securities = {k: float(k[1:]) for k in all_securities.keys() if k in model_opt}
+    # other_securities = {k: v for k, v in all_securities.items() if k not in model_opt}
+    #
+    # St0 = np.array([val for k, val in all_securities.items() if k in model_opt])
+    # # states = [1187.5, 1225, 1300, 1362.5, 1412.5, 1500, 1575]
+    # states = [1187.5, 1225, 1280, 1412.5, 1500, 1575]
+    # f_states, l_states = [800, 950, 1100], [1650, 1700, 1800]
+    # states_comb = []
+    # for f in f_states:
+    #     for l in l_states:
+    #         states_comb.append([f] + states + [l])
+    # print("State combinations: {}\n{}".format(len(states_comb), states_comb))
+    #
+    # final_result = {}
+    # for states in states_comb:
+    #     pair = "{} - {}".format(states[0], states[-1])
+    #     opm = OnePeriodMarketModel(init_price_vec=St0, states=states, option_info=securities)
+    #     Q, af = opm.option_pricing_model()
+    #     final_result[pair] = {"Q": Q, "Arbitrage-free": af}
+    #     if not af: continue
+    #
+    #     rmse = opm.compute_RMS(other_securities)
+    #     final_result[pair].update({"RMSE": round(rmse, 4)})
+    # print("")
+    # for k, v in final_result.items():
+    #     print(k)
+    #     print(v)
+    #     print("")
 
     # # # Question 6
     # model_opt = ["P1200", "P1300", "P1400", "C1400", "C1450", "C1550", "C1600"]
@@ -224,11 +224,59 @@ if __name__ == "__main__":
     # f_state, l_state = 1000, 1700
     # states = [f_state] + states + [l_state]
     # opm = OnePeriodMarketModel(init_price_vec=St0, states=states, option_info=securities)
-    # Q = opm.option_pricing_model()
+    # Q, _ = opm.option_pricing_model()
     # print("Q:", Q)
-    # new_option = {"C1300": 1300}
-    # option_price = opm.option_pricing(new_option, Q=Q)
-    # print("Option price:", option_price)
+    # # new_option = {"C1300": 1300}
+    # # option_price = opm.option_pricing(new_option, Q=Q)
+    # # print("Option price:", option_price)
     #
     # rmse = opm.compute_RMS(other_securities)
     # print("The RMSE of the model is: {:.2f}%".format(rmse * 100))
+
+    # Question 7
+    all_securities = {
+        "C1175": (68, 70), "C1200": (52.8, 54.8), "C1225": (40.3, 42.3), "C1250": (29.6, 31.6),
+        "C1275": (21.3, 23.3), "C1300": (15, 16.2), "C1325": (10, 11), "C1350": (6.3, 7.3), "C1375": (4, 4.7),
+        "C1400": (2.5, 3.2), "C1425": (1.4, 1.85), "C1450": (0.8, 1.25), "C1475": (0.35, 0.8),
+        "P800": (1.2, 1.65), "P900": (3.4, 4.1), "P950": (5.3, 6.3), "P995": (8.5, 9.5), "P1025": (11.1, 12.6),
+        "P1050": (14, 15.5), "P1060": (15.7, 17.2), "P1075": (18, 19.5), "P1100": (22.7, 24.7),
+        "P1150": (35.3, 37.3), "P1175": (44.1, 46.1), "P1200": (53.9, 55.9)
+    }
+    security_prices = {k: (v1 + v2) / 2 for k, (v1, v2) in all_securities.items()}
+    model_opt = ["P800", "P950", "P1050", "P1200", "C1200", "C1275", "C1350", "C1425"]
+    securities = {s: float(s[1:]) for s in model_opt}
+    other_securities = {k: v for k, v in security_prices.items() if k not in model_opt}
+
+    St0 = [security_prices[s] for s in model_opt]
+    states = [650, 875, 1000, 1125, 1237.5, 1312.5, 1387.5, 1500]
+    if len(states) != len(securities):
+        raise ValueError("Not commensurate securities and states.")
+
+    print("St0:\n", St0)
+    print("states:\n", states)
+    print("securities:\n", securities)
+    opm = OnePeriodMarketModel(init_price_vec=St0, states=states, option_info=securities)
+    Q = opm.option_pricing_model()
+    print("Payoff matrix:\n", opm.payoff)
+    print("Q:\n", Q)
+    print(opm._check_complete(opm.payoff))
+    print(opm._check_arbitrage_free(opm.payoff, opm.init_price_vec))
+
+    # Price each asset
+    from pandas import DataFrame, set_option
+    set_option("display.float_format", lambda x: "{:.4f}".format(x))
+
+    new_option = {s: float(s[1:]) for s in security_prices if s not in model_opt}
+    res = DataFrame(columns=["Option", "Model price", "Midpoint (market) price", "Error"])
+    for sec, prc in other_securities.items():
+        mdl_price = opm.option_pricing({sec: new_option[sec]}, Q=Q[0])[sec]
+        error = opm.compute_abs_error({sec: prc}, Q=Q[0])
+        res.loc[len(res)] = [sec, mdl_price, prc, error]
+    print(res)
+
+    overall_error = opm.compute_abs_error(other_securities)
+    print("overall error: {:.4f}".format(overall_error))
+    print(sum(res["Error"]))
+
+    cols = {"opt": "Option", "err": "Error", "mkt": "Midpoint (market) price"}
+    opm.graph_error_distribution(res, 8, cols)

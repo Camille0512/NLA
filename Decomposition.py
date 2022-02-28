@@ -1,6 +1,8 @@
 from copy import deepcopy
 from numpy.linalg import det
 from numpy import array, dot, diag, zeros, log, exp, ones, matrix, append, around, square, sqrt
+import matplotlib.pyplot as plt
+from pandas import DataFrame
 
 import MatrixVerifications as v
 
@@ -355,7 +357,7 @@ class OnePeriodMarketModel(LU):
     def __option_info(self, option_info):
         """
         Extract the option information, including the put call type and their corresponding strikes.
-        :params option_info: The option(s) information.
+        :param option_info: The option(s) information.
         :return: Option types (put/call), corresponding strikes.
         """
         options, strikes = [], []
@@ -370,7 +372,8 @@ class OnePeriodMarketModel(LU):
     def _option_payoff_matrix(self, option_info=None, update=True):
         """
         Compute the payoff(s) matrix of given information.
-        :params option_info: The option(s) information. Default None.
+        :param option_info: The option(s) information. Default None.
+        :param update: Whether update the class variable (payoff matrix).
         :return: The payoff(s) matrix of given information, options position, strikes, option_info.
         """
         if len(self.states.shape) == 1:
@@ -393,7 +396,7 @@ class OnePeriodMarketModel(LU):
         """
         Check whether the matrix is square and nonsingular.
         Used in checking the complete market.
-        :params M: The input matrix to be checked whether is complete.
+        :param M: The input matrix to be checked whether is complete.
         :return: Whether the market is complete.
         """
         row, col = M.shape
@@ -403,12 +406,13 @@ class OnePeriodMarketModel(LU):
             return False
         return True
 
-    def _check_arbitrage_free(self, M: matrix, S0: array):
+    def _check_arbitrage_free(self, M: matrix, S0: array, options=None):
         """
         Check whether the given payoff matrix gives a solution all larger than 0.
         The is to check the matrix of a one period model is arbitrage-free.
         :param M: The payoff matrix.
         :param S0: The price vector at time 0.
+        :param options (array): The option type information.
         :return: Whether it is arbitrage free.
         """
         row, col = M.shape
@@ -416,7 +420,8 @@ class OnePeriodMarketModel(LU):
             raise ValueError("Please input a square matrix")
 
         # If M is made up of a lower triangular matrix and an upper triangular matrix.
-        options = deepcopy(self.options)
+        if options is None: options = deepcopy(self.options)
+        if self.options is None: raise ValueError("Please input options type information.")
         cut = sum(options == -1)[0]
         m1, m2 = M[:cut, :cut], M[cut:, cut:]
         M, S0 = [list(i) for i in M], list(S0.reshape(1, -1)[0])
@@ -449,38 +454,41 @@ class OnePeriodMarketModel(LU):
         self.Q = Q
         return False if sum(array(Q) < 0) > 0 else True
 
-    def option_pricing_model(self, M=None, S0=None):
+    def option_pricing_model(self, M=None, S0=None, options=None, update=True):
         """
-        Option pricing model.
+        Get the option pricing model by given payoff matrix, St0, and selected options.
         :param M: The payoff matrix. Can be computed or given directly.
         :param S0: The price vector at time 0. Should be given or initiated.
-        :return: The pricing model vector Q.
+        :param options: The option type information (array).
+        :param update: Whether update the class variable (payoff matrix).
+        :return: The pricing model vector Q, and whether it is arbitrage free.
         """
         af = True
         if M is None:
             try:
-                M, _, _ = self._option_payoff_matrix()
+                M, _, _ = self._option_payoff_matrix(update=update)
             except:
                 raise ValueError("Please either initiate the variables or input payoff matrix.")
         if S0 is None:
             S0 = deepcopy(self.init_price_vec)
         if not self._check_complete(M):
             raise ValueError("The model is not complete.")
-        if not self._check_arbitrage_free(M, S0):
+        if not self._check_arbitrage_free(M, S0, options):
             af = False
         return self.Q, af
 
-    def option_pricing(self, option_info: dict, Q=None, d=0):
+    def option_pricing(self, option_info: dict, Q=None, d=0, update=False):
         """
-        Option pricing by given option type and strike.
+        Option pricing by using computed Q and new incoming option type and strike.
         :param option_info: The option information. In a dictionary format, key is the option type, value is the strike.
         :param Q: The pricing model vector.
         :param d: The number of decimals to be kept.
+        :param update: Whether update the class variable (payoff matrix).
         :return: The option price vector corresponding to each states.
         """
         if Q is None:
             Q = deepcopy(self.Q)
-        payoff, options, strikes = self._option_payoff_matrix(option_info, update=False)
+        payoff, options, strikes = self._option_payoff_matrix(option_info, update=update)
         price = dot(payoff, Q)
         option_price_info = {}
         for e, (opt, X) in enumerate(zip(options, strikes)):
@@ -494,18 +502,82 @@ class OnePeriodMarketModel(LU):
             option_price_info[key] = price[e]
         return option_price_info
 
+    def compute_abs_error(self, option_price: dict, Q=None, d=0):
+        """
+        Compute the Average Absolute Error of the model estimated price and the real price of the corresponding same
+        options.
+        :param option_price: The option information. In a dictionary format, key is the option type, value is the price.
+        :param Q: The pricing model vector.
+        :param d: The number of decimals to be kept.
+        :return: The average absolute error of the model.
+        """
+        option_info = {k: int(k[1:]) if float(k[1:]) % 5 == 0 else float(k[1:]) for k in option_price.keys()}
+        model_prices = self.option_pricing(option_info=option_info, Q=Q)
+        abse = 0
+        for k in model_prices.keys():
+            abse += abs(model_prices.get(k, 0) - option_price.get(k, 0)) / option_price.get(k, 0)
+        return abse
+
+    def compute_mse_error(self, option_price: dict, Q=None, d=0):
+        """
+        Compute the MSE of the model estimated price and the real price of the corresponding same options.
+        :param option_price: The option information. In a dictionary format, key is the option type, value is the price.
+        :param Q: The pricing model vector.
+        :param d: The number of decimals to be kept.
+        :return: The root-mean-squared error (MSE) of the model.
+        """
+        option_info = {k: int(k[1:]) if float(k[1:]) % 5 == 0 else float(k[1:]) for k in option_price.keys()}
+        model_prices = self.option_pricing(option_info=option_info, Q=Q)
+        mse = 0
+        for k in model_prices.keys():
+            mse += square((model_prices.get(k, 0) - option_price.get(k, 0)) / option_price.get(k, 0))
+        return mse
+
     def compute_RMS(self, option_price: dict, Q=None, d=0):
         """
-        Compute the RMSE of the model estimated price and the real price of the corresponding same option.
+        Compute the RMSE of the model estimated price and the real price of the corresponding same options.
         :param option_price: The option information. In a dictionary format, key is the option type, value is the price.
         :param Q: The pricing model vector.
         :param d: The number of decimals to be kept.
         :return: The root-mean-squared error (RMSE) of the model.
         """
-        option_info = {k: int(k[1:]) for k in option_price.keys()}
-        model_prices = self.option_pricing(option_info=option_info, Q=Q)
-        mse = 0
-        for k in model_prices.keys():
-            mse += square((model_prices.get(k, 0) - option_price.get(k, 0)) / option_price.get(k, 0))
+        if Q is None:
+            Q = deepcopy(self.Q)
+        mse = self.compute_mse_error(option_price, Q)
         rmse = sqrt(mse / len(option_price.keys()))
         return rmse
+
+    def graph_error_distribution(self, err_df: DataFrame, inx: int, cols: dict, save_fig=False, fig_name="graph"):
+        """
+        Graph the error of each securities.
+        :param err_df: The error dataframe.
+        :param inx: The index to separate calls and puts.
+        :param cols: A dictionary corresponding to security, error, and market price columns of the error dataframe.
+        :param save_fig: Whether to save config.
+        :param fig_name: The figure name to be saved.
+        :return: Plot a graph or save the graph.
+        """
+        opt, err, mkt = cols["opt"], cols["err"], cols["mkt"]
+        cx, cy = array([int(i[1:]) for i in err_df[opt] if i[0] == "C"]), array(err_df.loc[:inx, err])
+        px, py = array([int(i[1:]) for i in err_df[opt] if i[0] == "P"]), array(err_df.loc[inx+1:, err])
+        c_price, p_price = array(err_df.loc[:inx, mkt]), array(err_df.loc[inx+1:, mkt])
+        plt.figure(figsize=(15, 6))
+        ax = plt.axes()
+        ax_ = ax.twinx()
+        ax.plot(cx, cy, color="orange", linewidth=2, label="Call")
+        ax.plot(px, py, color="seagreen", linewidth=2, label="Put")
+        ax_.plot(cx, c_price, color="yellow", linewidth=2, label="Call")
+        ax_.plot(px, p_price, color="cornflowerblue", linewidth=2, label="Put")
+        for i in self.option_info.keys():
+            t, x_point = i[0], int(i[1:])
+            ax.scatter(x_point, 0, marker="*", s=300, color="red", edgecolors="black")
+        ax.set_xlabel("Error", fontsize=12)
+        ax.set_ylabel("Strike", fontsize=12)
+        ax_.set_ylabel("Market Price", fontsize=12)
+        ax.legend()
+        ax.grid(True)
+        ax.set_title("Error Trend of All the Securities", fontsize=16)
+        if save_fig:
+            plt.savefig(fig_name + ".png")
+        else:
+            plt.show()
