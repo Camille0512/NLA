@@ -322,7 +322,7 @@ class EquationSimulation(LU):
 
     def cubic_spline_interpolation(self, intervals: list, f_x: list):
         """
-        To solve the cubic spline interpolation problem.
+        To solve the cubic spline interpolation problem. Generate the pricing equation for bonds.
         :param intervals: The intervals for the problem.
         :param f_x: The value corresponding to each of the intervals.
         :return: The parameters for the equations in each interval and the corresponding intervals.
@@ -393,7 +393,7 @@ class OnePeriodMarketModel(LU):
         return payoff, options, strikes
 
     @staticmethod
-    def _check_complete(M: matrix):
+    def check_complete(M: matrix):
         """
         Check whether the matrix is square and nonsingular.
         Used in checking the complete market.
@@ -407,7 +407,7 @@ class OnePeriodMarketModel(LU):
             return False
         return True
 
-    def _check_arbitrage_free(self, M: matrix, S0: array, options=None):
+    def check_arbitrage_free(self, M: matrix, S0: array, options=None):
         """
         Check whether the given payoff matrix gives a solution all larger than 0.
         The is to check the matrix of a one period model is arbitrage-free.
@@ -472,9 +472,9 @@ class OnePeriodMarketModel(LU):
                 raise ValueError("Please either initiate the variables or input payoff matrix.")
         if S0 is None:
             S0 = deepcopy(self.init_price_vec)
-        if not self._check_complete(M):
+        if not self.check_complete(M):
             raise ValueError("The model is not complete.")
-        if not self._check_arbitrage_free(M, S0, options):
+        if not self.check_arbitrage_free(M, S0, options):
             af = False
         return self.Q, af
 

@@ -1,7 +1,9 @@
 import numpy as np
+from numpy.linalg import matrix_rank, inv
 from collections import OrderedDict
 from Decomposition import LU, EquationSimulation, OnePeriodMarketModel, trans_discount_factor_zero_rate, \
     compute_discount_factor
+from Eigens import compute_tri_diagonal_symmetric
 
 np.set_printoptions(suppress=True)
 
@@ -233,50 +235,75 @@ if __name__ == "__main__":
     # rmse = opm.compute_RMS(other_securities)
     # print("The RMSE of the model is: {:.2f}%".format(rmse * 100))
 
-    # Question 7
-    all_securities = {
-        "C1175": (68, 70), "C1200": (52.8, 54.8), "C1225": (40.3, 42.3), "C1250": (29.6, 31.6),
-        "C1275": (21.3, 23.3), "C1300": (15, 16.2), "C1325": (10, 11), "C1350": (6.3, 7.3), "C1375": (4, 4.7),
-        "C1400": (2.5, 3.2), "C1425": (1.4, 1.85), "C1450": (0.8, 1.25), "C1475": (0.35, 0.8),
-        "P800": (1.2, 1.65), "P900": (3.4, 4.1), "P950": (5.3, 6.3), "P995": (8.5, 9.5), "P1025": (11.1, 12.6),
-        "P1050": (14, 15.5), "P1060": (15.7, 17.2), "P1075": (18, 19.5), "P1100": (22.7, 24.7),
-        "P1150": (35.3, 37.3), "P1175": (44.1, 46.1), "P1200": (53.9, 55.9)
-    }
-    security_prices = {k: (v1 + v2) / 2 for k, (v1, v2) in all_securities.items()}
-    model_opt = ["P800", "P950", "P1050", "P1200", "C1200", "C1275", "C1350", "C1425"]
-    securities = {s: float(s[1:]) for s in model_opt}
-    other_securities = {k: v for k, v in security_prices.items() if k not in model_opt}
-
-    St0 = [security_prices[s] for s in model_opt]
-    states = [650, 875, 1000, 1125, 1237.5, 1312.5, 1387.5, 1500]
-    if len(states) != len(securities):
-        raise ValueError("Not commensurate securities and states.")
-
-    # print("St0:\n", St0)
-    # print("states:\n", states)
-    # print("securities:\n", securities)
-    opm = OnePeriodMarketModel(init_price_vec=St0, states=states, option_info=securities)
-    Q = opm.option_pricing_model()
-    print("Payoff matrix:\n", opm.payoff)
-    print("Q:\n", Q)
-    print(opm._check_complete(opm.payoff))
-    print(opm._check_arbitrage_free(opm.payoff, opm.init_price_vec))
-
-    # # Price each asset
-    # from pandas import DataFrame, set_option
-    # set_option("display.float_format", lambda x: "{:.4f}".format(x))
+    # # Question 7
+    # all_securities = {
+    #     "C1175": (68, 70), "C1200": (52.8, 54.8), "C1225": (40.3, 42.3), "C1250": (29.6, 31.6),
+    #     "C1275": (21.3, 23.3), "C1300": (15, 16.2), "C1325": (10, 11), "C1350": (6.3, 7.3), "C1375": (4, 4.7),
+    #     "C1400": (2.5, 3.2), "C1425": (1.4, 1.85), "C1450": (0.8, 1.25), "C1475": (0.35, 0.8),
+    #     "P800": (1.2, 1.65), "P900": (3.4, 4.1), "P950": (5.3, 6.3), "P995": (8.5, 9.5), "P1025": (11.1, 12.6),
+    #     "P1050": (14, 15.5), "P1060": (15.7, 17.2), "P1075": (18, 19.5), "P1100": (22.7, 24.7),
+    #     "P1150": (35.3, 37.3), "P1175": (44.1, 46.1), "P1200": (53.9, 55.9)
+    # }
+    # security_prices = {k: (v1 + v2) / 2 for k, (v1, v2) in all_securities.items()}
+    # model_opt = ["P800", "P950", "P1050", "P1200", "C1200", "C1275", "C1350", "C1425"]
+    # securities = {s: float(s[1:]) for s in model_opt}
+    # other_securities = {k: v for k, v in security_prices.items() if k not in model_opt}
     #
-    # new_option = {s: float(s[1:]) for s in security_prices if s not in model_opt}
-    # res = DataFrame(columns=["Option", "Model price", "Midpoint (market) price", "Error"])
-    # for sec, prc in other_securities.items():
-    #     mdl_price = opm.option_pricing({sec: new_option[sec]}, Q=Q[0])[sec]
-    #     error = opm.compute_abs_error({sec: prc}, Q=Q[0])
-    #     res.loc[len(res)] = [sec, mdl_price, prc, error]
-    # print(res)
+    # St0 = [security_prices[s] for s in model_opt]
+    # states = [650, 875, 1000, 1125, 1237.5, 1312.5, 1387.5, 1500]
+    # if len(states) != len(securities):
+    #     raise ValueError("Not commensurate securities and states.")
     #
-    # overall_error = opm.compute_abs_error(other_securities)
-    # print("overall error: {:.4f}".format(overall_error))
-    # print(sum(res["Error"]))
+    # # print("St0:\n", St0)
+    # # print("states:\n", states)
+    # # print("securities:\n", securities)
+    # opm = OnePeriodMarketModel(init_price_vec=St0, states=states, option_info=securities)
+    # Q = opm.option_pricing_model()
+    # print("Payoff matrix:\n", opm.payoff)
+    # print("Q:\n", Q)
+    # print(opm.check_complete(opm.payoff))
+    # print(opm.check_arbitrage_free(opm.payoff, opm.init_price_vec))
     #
-    # cols = {"opt": "Option", "err": "Error", "mkt": "Midpoint (market) price"}
-    # opm.graph_error_distribution(res, 8, cols)
+    # # # Price each asset
+    # # from pandas import DataFrame, set_option
+    # # set_option("display.float_format", lambda x: "{:.4f}".format(x))
+    # #
+    # # new_option = {s: float(s[1:]) for s in security_prices if s not in model_opt}
+    # # res = DataFrame(columns=["Option", "Model price", "Midpoint (market) price", "Error"])
+    # # for sec, prc in other_securities.items():
+    # #     mdl_price = opm.option_pricing({sec: new_option[sec]}, Q=Q[0])[sec]
+    # #     error = opm.compute_abs_error({sec: prc}, Q=Q[0])
+    # #     res.loc[len(res)] = [sec, mdl_price, prc, error]
+    # # print(res)
+    # #
+    # # overall_error = opm.compute_abs_error(other_securities)
+    # # print("overall error: {:.4f}".format(overall_error))
+    # # print(sum(res["Error"]))
+    # #
+    # # cols = {"opt": "Option", "err": "Error", "mkt": "Midpoint (market) price"}
+    # # opm.graph_error_distribution(res, 8, cols)
+
+    # Question 8
+    e_dict = compute_tri_diagonal_symmetric(2, 1, 4)
+    print("Eigenvalue and Eigenvector:")
+    nm = []
+    for k, v in e_dict.items():
+        print("{}: {}".format(k, v))
+        nm.append(v[0])
+    # # Compare with numpy result
+    # np_e_val, np_e_vec = np.linalg.eig(np.array([
+    #     [2, -1, 0, 0],
+    #     [-1, 2, -1, 0],
+    #     [0, -1, 2, -1],
+    #     [0, 0, -1, 2]
+    # ]))
+    # print(np_e_val)
+    # # Linear dependent to the result got by using numpy
+    # nm = np.array(nm)
+    # nm = np.vstack([nm, np_e_vec])
+    # print(matrix_rank(nm))
+
+    nm = np.array(nm)
+    print(nm)
+    print("Inverse of V:\n", np.around(inv(nm), 6))
+    
