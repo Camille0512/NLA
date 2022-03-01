@@ -252,9 +252,9 @@ if __name__ == "__main__":
     if len(states) != len(securities):
         raise ValueError("Not commensurate securities and states.")
 
-    print("St0:\n", St0)
-    print("states:\n", states)
-    print("securities:\n", securities)
+    # print("St0:\n", St0)
+    # print("states:\n", states)
+    # print("securities:\n", securities)
     opm = OnePeriodMarketModel(init_price_vec=St0, states=states, option_info=securities)
     Q = opm.option_pricing_model()
     print("Payoff matrix:\n", opm.payoff)
@@ -262,21 +262,21 @@ if __name__ == "__main__":
     print(opm._check_complete(opm.payoff))
     print(opm._check_arbitrage_free(opm.payoff, opm.init_price_vec))
 
-    # Price each asset
-    from pandas import DataFrame, set_option
-    set_option("display.float_format", lambda x: "{:.4f}".format(x))
-
-    new_option = {s: float(s[1:]) for s in security_prices if s not in model_opt}
-    res = DataFrame(columns=["Option", "Model price", "Midpoint (market) price", "Error"])
-    for sec, prc in other_securities.items():
-        mdl_price = opm.option_pricing({sec: new_option[sec]}, Q=Q[0])[sec]
-        error = opm.compute_abs_error({sec: prc}, Q=Q[0])
-        res.loc[len(res)] = [sec, mdl_price, prc, error]
-    print(res)
-
-    overall_error = opm.compute_abs_error(other_securities)
-    print("overall error: {:.4f}".format(overall_error))
-    print(sum(res["Error"]))
-
-    cols = {"opt": "Option", "err": "Error", "mkt": "Midpoint (market) price"}
-    opm.graph_error_distribution(res, 8, cols)
+    # # Price each asset
+    # from pandas import DataFrame, set_option
+    # set_option("display.float_format", lambda x: "{:.4f}".format(x))
+    #
+    # new_option = {s: float(s[1:]) for s in security_prices if s not in model_opt}
+    # res = DataFrame(columns=["Option", "Model price", "Midpoint (market) price", "Error"])
+    # for sec, prc in other_securities.items():
+    #     mdl_price = opm.option_pricing({sec: new_option[sec]}, Q=Q[0])[sec]
+    #     error = opm.compute_abs_error({sec: prc}, Q=Q[0])
+    #     res.loc[len(res)] = [sec, mdl_price, prc, error]
+    # print(res)
+    #
+    # overall_error = opm.compute_abs_error(other_securities)
+    # print("overall error: {:.4f}".format(overall_error))
+    # print(sum(res["Error"]))
+    #
+    # cols = {"opt": "Option", "err": "Error", "mkt": "Midpoint (market) price"}
+    # opm.graph_error_distribution(res, 8, cols)

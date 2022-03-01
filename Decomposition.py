@@ -354,7 +354,8 @@ class OnePeriodMarketModel(LU):
         self.options = None
         self.strikes = None
 
-    def __option_info(self, option_info):
+    @staticmethod
+    def __option_info(option_info):
         """
         Extract the option information, including the put call type and their corresponding strikes.
         :param option_info: The option(s) information.
@@ -516,7 +517,7 @@ class OnePeriodMarketModel(LU):
         abse = 0
         for k in model_prices.keys():
             abse += abs(model_prices.get(k, 0) - option_price.get(k, 0)) / option_price.get(k, 0)
-        return abse
+        return abse / len(model_prices.keys())
 
     def compute_mse_error(self, option_price: dict, Q=None, d=0):
         """
