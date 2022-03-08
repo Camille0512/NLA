@@ -1,8 +1,8 @@
 import numpy as np
-from numpy.linalg import matrix_rank, inv
+from numpy.linalg import matrix_rank, inv, eigvals
 from collections import OrderedDict
 from Decomposition import LU, EquationSimulation, OnePeriodMarketModel, trans_discount_factor_zero_rate, \
-    compute_discount_factor
+    compute_discount_factor, Cholesky
 from Eigens import compute_tri_diagonal_symmetric
 
 np.set_printoptions(suppress=True)
@@ -132,10 +132,10 @@ if __name__ == "__main__":
     #     print(x)
 
     # # Question 3
-    # lu = LU()
+    # es = EquationSimulation()
     # interval = [0, 2/12, 5/12, 11/12, 15/12]
     # fx = [0.999973, 0.998, 0.9935, 0.982, 0.9775]
-    # x = lu.cubic_spline_interpolation(interval, fx)
+    # x = es.cubic_spline_interpolation_lu(interval, fx)
     # print("x:", x)
     # for i in range(4):
     #     print(x[i * 4 : (i + 1) * 4])
@@ -148,7 +148,9 @@ if __name__ == "__main__":
     # lu = EquationSimulation()
     # interval = [0, 2 / 12, 5 / 12, 11 / 12, 15 / 12]
     # fx = [0.01] + zr
-    # x, eq = lu.cubic_spline_interpolation(interval, fx)
+    # x, eq = lu.cubic_spline_interpolation_lu(interval, fx)
+    # print("x:\n", x)
+    # print("Equation:", eq)
     #
     # res, new_interval = 0, [1 / 12, 4 / 12, 7 / 12, 10 / 12, 13 / 12]
     # for i in range(5):
@@ -163,7 +165,7 @@ if __name__ == "__main__":
     #
     # lu = EquationSimulation()
     # interval = [0, 2 / 12, 6 / 12, 1, 20 / 12]
-    # x, eq = lu.cubic_spline_interpolation(interval, fx)
+    # x, eq = lu.cubic_spline_interpolation_lu(interval, fx)
     # print(eq)
     #
     # res, new_interval = 0, [1 / 12, 4 / 12, 7 / 12, 10 / 12, 13 / 12]
@@ -264,46 +266,74 @@ if __name__ == "__main__":
     # print(opm.check_complete(opm.payoff))
     # print(opm.check_arbitrage_free(opm.payoff, opm.init_price_vec))
     #
-    # # # Price each asset
-    # # from pandas import DataFrame, set_option
-    # # set_option("display.float_format", lambda x: "{:.4f}".format(x))
-    # #
-    # # new_option = {s: float(s[1:]) for s in security_prices if s not in model_opt}
-    # # res = DataFrame(columns=["Option", "Model price", "Midpoint (market) price", "Error"])
-    # # for sec, prc in other_securities.items():
-    # #     mdl_price = opm.option_pricing({sec: new_option[sec]}, Q=Q[0])[sec]
-    # #     error = opm.compute_abs_error({sec: prc}, Q=Q[0])
-    # #     res.loc[len(res)] = [sec, mdl_price, prc, error]
-    # # print(res)
-    # #
-    # # overall_error = opm.compute_abs_error(other_securities)
-    # # print("overall error: {:.4f}".format(overall_error))
-    # # print(sum(res["Error"]))
-    # #
-    # # cols = {"opt": "Option", "err": "Error", "mkt": "Midpoint (market) price"}
-    # # opm.graph_error_distribution(res, 8, cols)
+    # # Price each asset
+    # from pandas import DataFrame, set_option
+    # set_option("display.float_format", lambda x: "{:.4f}".format(x))
+    #
+    # new_option = {s: float(s[1:]) for s in security_prices if s not in model_opt}
+    # res = DataFrame(columns=["Option", "Model price", "Midpoint (market) price", "Error"])
+    # for sec, prc in other_securities.items():
+    #     mdl_price = opm.option_pricing({sec: new_option[sec]}, Q=Q[0])[sec]
+    #     error = opm.compute_abs_error({sec: prc}, Q=Q[0])
+    #     res.loc[len(res)] = [sec, mdl_price, prc, error]
+    # print(res)
+    #
+    # overall_error = opm.compute_abs_error(other_securities)
+    # print("overall error: {:.4f}".format(overall_error))
+    # print(sum(res["Error"]))
+    #
+    # cols = {"opt": "Option", "err": "Error", "mkt": "Midpoint (market) price"}
+    # opm.graph_error_distribution(res, 8, cols)
 
-    # Question 8
-    e_dict = compute_tri_diagonal_symmetric(2, 1, 4)
-    print("Eigenvalue and Eigenvector:")
-    nm = []
-    for k, v in e_dict.items():
-        print("{}: {}".format(k, v))
-        nm.append(v[0])
-    # # Compare with numpy result
-    # np_e_val, np_e_vec = np.linalg.eig(np.array([
-    #     [2, -1, 0, 0],
-    #     [-1, 2, -1, 0],
-    #     [0, -1, 2, -1],
-    #     [0, 0, -1, 2]
-    # ]))
-    # print(np_e_val)
-    # # Linear dependent to the result got by using numpy
+    # # Question 8
+    # e_dict = compute_tri_diagonal_symmetric(2, 1, 4)
+    # print("Eigenvalue and Eigenvector:")
+    # nm = []
+    # for k, v in e_dict.items():
+    #     print("{}: {}".format(k, v))
+    #     nm.append(v[0])
+    # # # Compare with numpy result
+    # # np_e_val, np_e_vec = np.linalg.eig(np.array([
+    # #     [2, -1, 0, 0],
+    # #     [-1, 2, -1, 0],
+    # #     [0, -1, 2, -1],
+    # #     [0, 0, -1, 2]
+    # # ]))
+    # # print(np_e_val)
+    # # # Linear dependent to the result got by using numpy
+    # # nm = np.array(nm)
+    # # nm = np.vstack([nm, np_e_vec])
+    # # print(matrix_rank(nm))
+    #
     # nm = np.array(nm)
-    # nm = np.vstack([nm, np_e_vec])
-    # print(matrix_rank(nm))
+    # print(nm)
+    # print("Inverse of V:\n", np.around(inv(nm), 6))
 
-    nm = np.array(nm)
-    print(nm)
-    print("Inverse of V:\n", np.around(inv(nm), 6))
-    
+    # # Question 10
+    # A = np.array([
+    #     [41, 24],
+    #     [24, 136]
+    # ])
+    # lu = LU()
+    # L, U = lu.lu_no_pivoting(A)
+    # print("L:\n", L)
+    # print("U:\n", U)
+
+    # # Question 11
+    # A = [
+    #     [9, -3, 6, -3],
+    #     [-3, 5, -4, 7],
+    #     [6, -4, 21, 3],
+    #     [-3, 7, 3, 15]
+    # ]
+    # cld = Cholesky(A=A)
+    # U = cld.Cholesky_decomposition()
+    # print(U)
+
+    # Question 12
+    intervals = [0, 2/12, 6/12, 1, 20/12]
+    f_x = [0.005, 0.0065, 0.0085, 0.0105, 0.012]
+    es = EquationSimulation()
+    w, equations = es.cubic_spline_interpolation_cd(intervals, f_x)
+    print("w:\n", w)
+    print("\nEquation:\n", equations)
