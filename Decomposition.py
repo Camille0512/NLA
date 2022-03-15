@@ -1,10 +1,10 @@
 from copy import deepcopy
 from numpy.linalg import det
-from numpy import array, dot, diag, zeros, log, exp, ones, matrix, append, around, square, sqrt
+from numpy import array, dot, diag, zeros, log, exp, ones, matrix, append, around, square, sqrt, matrix
 import matplotlib.pyplot as plt
 from pandas import DataFrame
 
-import MatrixVerifications as v
+import Verifications as v
 
 
 def trans_discount_factor_zero_rate(discount_factor: list, periods: list, period_type: str):
@@ -169,7 +169,8 @@ class LU:
         if self.n is None:
             self.n = A.shape[0]
         n = self.n
-        if not givenLU: self.L, self.U = self.create_clean_matrix(), self.create_clean_matrix()
+        if not givenLU:
+            self.L, self.U = self.create_clean_matrix(), self.create_clean_matrix()
         P = [[1 if i == j else 0 for j in range(n)] for i in range(n)]
 
         for i in range(0, n - 1):
@@ -194,13 +195,16 @@ class LU:
         elif cate.lower() == "bs":
             return self.backward_substitution(M, b) if M is not None else self.forward_substitution(b)
 
-    def _dfc_rp(self, P=None, b=None):
+    def _dfc_rp(self, A=None, P=None, b=None):
         if self.b is None and b is None:
             raise EOFError("Please give the vector b.")
         if b is None:
             b = deepcopy(self.b)
+        if A is not None:
+            self.lu_row_pivoting(A=A)
         if P is None:
-            if self.P is None: self.lu_row_pivoting()
+            if self.P is None:
+                self.lu_row_pivoting()
             P = deepcopy(self.P)
         pb = list(dot(array(P), array(b)))
         y = self.forward_substitution(b=pb)
@@ -221,7 +225,7 @@ class LU:
     def compute_linear_system(self, B: list, A=None, givenLU=False):
         """
         Solve the multiple linear system for the same given matrix.
-        :param B: The given results for the linear system (the right side of the equations).
+        :param B: The given results for the linear system (the right side of the equations), a list of list.
         :param A: The given matrix for the linear system.
         :param givenLU: Whether use the previous given L & U matrix, default False (not use).
         :return: The solution for the multiple linear system.
@@ -233,18 +237,128 @@ class LU:
         if self.n is None:
             self.n = self.A.shape[0]
 
-        if not givenLU: self.L, self.U = self.create_clean_matrix(), self.create_clean_matrix()
+        if not givenLU:
+            self.L, self.U = self.create_clean_matrix(), self.create_clean_matrix()
         _, _, P = self.lu_row_pivoting(A=A)
 
         B = array(B)
         s = B.shape[1]
         LS = diag(zeros(s))
         for i in range(s):
-            v = dot(P, B[:, i])
-            y = self.forward_substitution(b=v)
+            b = dot(P, B[:, i])
+            y = self.forward_substitution(b=b)
             x = self.backward_substitution(b=y)
             LS[:, i] = x
         res = [list(LS[row, :]) for row in range(s)]
+        return res
+
+
+class Cholesky(LU):
+    def __init__(self, A=None, U=None, b=None):
+        super().__init__(A, U, b)
+        self.U_t = None
+
+    def compute_U(self, inx=1, A=None, U=None):
+        """
+        Update of U for the Cholesky decomposition.
+        :param inx: The index for the position of U, a pointer.
+        :param A: The matrix of the linear system.
+        :param U: The upper triangular matrix for matrix A.
+        :return: Computed U.
+        """
+        p = inx - 1
+        if not U:
+            U = self.U.copy()
+        if not A:
+            A = self.A.copy()
+        U[p][p] = sqrt(A[p][p])
+        for k in range(p, self.n):
+            U[p][k] = A[p][k] / U[p][p]
+        return U
+
+    def _update_A(self, A: list, inx: int):
+        """
+        Update the entries of matrix A.
+        :param A: The matrix A of the linear system.
+        :param inx: The index for the position of A and U, a pointer.
+        :return: The updated matrix A.
+        """
+        if not A:
+            raise ValueError("Please input matrix A.")
+        for j in range(inx, self.n):
+            for k in range(inx, self.n):
+                A[j][k] = A[j][k] - self.U[inx - 1][j] * self.U[inx - 1][k]
+        return A
+
+    def Cholesky_decomposition(self, A=None):
+        """
+        Implementation of Cholesky decomposition on matrix A.
+        :param A: The input matrix A. Default None. When there is not initiation, A must be not None.
+        :return: The decomposed triangular matrix U.
+        """
+        if A is None and self.A is None:
+            raise ValueError("Please initialize matrix A or input matrix A.")
+        if A is None:
+            A = self.A.copy()
+
+        self.n = len(self.A[0])
+        if not v.check_spd(matrix(A)):
+            raise ValueError("The matrix cannot be implemented Cholesky decomposition.")
+        self.U = self.create_clean_matrix()
+
+        for i in range(1, self.n):
+            self.U = self.compute_U(inx=i)
+            A = self._update_A(A=A, inx=i)
+        self.U[self.n - 1][self.n - 1] = sqrt(A[self.n - 1][self.n - 1])
+        return self.U
+
+    def compute_single_linear_system(self, b: list, A=None, U=None):
+        """
+        Solve a single linear system for the matrix A.
+        :param b: The right side of the linear system.
+        :param A: The matrix A.
+        :param U: The upper triangular matrix U of the Cholesky decomposition of A.
+        :return: The solution for the single linear system x.
+        """
+        if A is None:
+            if self.A is None:
+                raise ValueError("Please initiate A or input A for the method.")
+            A = deepcopy(self.A)
+        if self.n is None:
+            self.n = self.A.shape[0]
+        if not U:
+            self.U = self.Cholesky_decomposition(A)
+        else:
+            self.U = deepcopy(U)
+
+        self.U_t = [list(arr) for arr in array(self.U)]
+        y = self.forward_substitution(L=self.U_t, b=b)
+        x = self.backward_substitution(U=self.U, b=y)
+        return x
+
+    def compute_linear_system(self, B: list, A=None, given_U=False):
+        """
+        Solve the multiple linear system for the same given matrix.
+        :param B: The given results for the linear system (the right side of the equations).
+        :param A: The given matrix for the linear system.
+        :param given_U: Whether use the previous given U matrix, default False (not use).
+        :return: The solution for the multiple linear system x list.
+        """
+        if A is None:
+            if self.A is None:
+                raise ValueError("Please initiate A or input A for the method.")
+            A = deepcopy(self.A)
+        if self.n is None:
+            self.n = self.A.shape[0]
+
+        if not given_U:
+            self.U = self.Cholesky_decomposition(A)
+        s = B.shape[1]
+        X = diag(zeros(s))
+        for e, b in enumerate(B):
+            x = self.compute_single_linear_system(b=b, A=A)
+            X[:, e] = x
+        res = [list(X[row, :]) for row in range(s)]
         return res
 
 
@@ -254,7 +368,7 @@ class EquationSimulation(LU):
         self.M = None
         self.v = None
 
-    def _interpolation_matrix(self, intervals: list):
+    def _interpolation_matrix_lu(self, intervals: list):
         """
         Generate the linear system for the cubic spline interpolation.
         :param intervals: The intervals for the problem.
@@ -302,7 +416,23 @@ class EquationSimulation(LU):
         M[-1][-2], M[-1][-1] = 2, 6 * intervals[n]
         self.M = M
 
-    def _interpolation_vector(self, f_x: list):
+    def _interpolation_matrix_cd(self, intervals: list):
+        """
+        Generate the linear system for the cubic spline interpolation by using Cholesky decomposition.
+        :param intervals: The intervals for the problem.
+        :return: The matrix to solve the cubic spline interpolation problem.
+        """
+        n = self.n
+        M = [[0] * (n) for i in range(n)]
+        for i in range(n):
+            M[i][i] = 2 * (intervals[i + 2] - intervals[i])
+            if i < n - 1:
+                M[i][i + 1] = intervals[i + 2] - intervals[i + 1]
+            if i > 0:
+                M[i][i - 1] = intervals[i + 1] - intervals[i]
+        self.M = M
+
+    def _interpolation_vector_lu(self, f_x: list):
         """
         Generate the linear system for the cubic spline interpolation.
         :param f_x: The value corresponding to each of the intervals.
@@ -320,21 +450,67 @@ class EquationSimulation(LU):
         val[-3], val[-2], val[-1] = f_x[-2], f_x[-1], 0
         self.v = val
 
-    def cubic_spline_interpolation(self, intervals: list, f_x: list):
+    def _interpolation_vector_cd(self, interval: list, f_x: list):
         """
-        To solve the cubic spline interpolation problem. Generate the pricing equation for bonds.
+        Generate the vector of the right side of the linear system for the cubic spline interpolation.
+        :param interval: The intervals of the objects.
+        :param f_x: The value corresponding to each of the intervals.
+        :return: The matrix to solve the cubic spline interpolation problem.
+        """
+        z = []
+        for i in range(self.n):
+            res1 = (f_x[i + 2] - f_x[i + 1]) / (interval[i + 2] - interval[i + 1])
+            res2 = (f_x[i + 1] - f_x[i]) / (interval[i + 1] - interval[i])
+            z.append(6 * (res1 - res2))
+        self.v = z
+
+    def cubic_spline_interpolation_lu(self, intervals: list, f_x: list):
+        """
+        To solve the cubic spline interpolation problem by using Cholesky decomposition.
+        Generate the pricing equation for bonds.
         :param intervals: The intervals for the problem.
         :param f_x: The value corresponding to each of the intervals.
         :return: The parameters for the equations in each interval and the corresponding intervals.
         """
-        self._interpolation_matrix(intervals)
-        self._interpolation_vector(f_x)
+        if not v.check_dimensions(intervals, f_x):
+            raise ValueError("Please input the invervals and f_x with same dimensions.")
+        self._interpolation_matrix_lu(intervals)
+        self._interpolation_vector_lu(f_x)
         _ = self.lu_row_pivoting(self.M)
         x = self._dfc_rp(b=self.v)
-        equations = {}
-        for i in range(4):
-            equations[(intervals[i], (intervals[i + 1]))] = x[i * 4: (i + 1) * 4]
+        equations, m = {}, len(intervals) - 1
+        for i in range(m):
+            equations[(intervals[i], (intervals[i + 1]))] = x[i * m: (i + 1) * m]
         return x, equations
+
+    def cubic_spline_interpolation_cd(self, intervals: list, f_x: list):
+        """
+        To solve the cubic spline interpolation problem by using Cholesky decomposition.
+        Generate the pricing equation for bonds.
+        :param intervals: The intervals for the problem.
+        :param f_x: The value corresponding to each of the intervals.
+        :return: The parameters for the equations in each interval and the corresponding intervals.
+        """
+        if not v.check_dimensions(intervals, f_x):
+            raise ValueError("Please input the invervals and f_x with same dimensions.")
+        self.n = len(intervals) - 2
+        self._interpolation_vector_cd(intervals, f_x)
+        self._interpolation_matrix_cd(intervals=intervals)
+        w = self._dfc_rp(A=self.M, b=self.v)
+        w = [0] + w + [0]
+        equations, m = {}, len(intervals) - 1
+        a, b, c, d, q, r = [0] * m, [0] * m, [0] * m, [0] * m, [0] * m, [0] * m
+        for i in range(m):
+            c[i] = (w[i] * intervals[i + 1] - w[i + 1] * intervals[i]) / (2 * (intervals[i + 1] - intervals[i]))
+            d[i] = (w[i + 1] - w[i]) / (6 * (intervals[i + 1] - intervals[i]))
+        for i in range(m):
+            q[i] = f_x[i] - c[i] * (intervals[i] ** 2) - d[i] * (intervals[i] ** 3)
+            r[i] = f_x[i + 1] - c[i] * (intervals[i + 1] ** 2) - d[i] * (intervals[i + 1] ** 3)
+        for i in range(m):
+            a[i] = (q[i] * intervals[i + 1] - r[i] * intervals[i]) / (intervals[i + 1] - intervals[i])
+            b[i] = (r[i] - q[i]) / (intervals[i + 1] - intervals[i])
+            equations[(intervals[i], (intervals[i + 1]))] = [a[i], b[i], c[i], d[i]]
+        return w, equations
 
 
 class OnePeriodMarketModel(LU):
