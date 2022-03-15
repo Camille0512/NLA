@@ -3,7 +3,9 @@ from numpy.linalg import matrix_rank, inv, eigvals
 from collections import OrderedDict
 from Decomposition import LU, EquationSimulation, OnePeriodMarketModel, trans_discount_factor_zero_rate, \
     compute_discount_factor, Cholesky
+
 from OtherFunctions import compute_tri_diagonal_symmetric, compute_root_quadratic_equation
+
 
 np.set_printoptions(suppress=True)
 
