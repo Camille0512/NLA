@@ -1,4 +1,4 @@
-from numpy import matrix, array, dot, sqrt, ones, sign
+from numpy import matrix, array, dot, sqrt, ones, sign, vstack, cov, mean
 from numpy.linalg import inv, multi_dot
 from copy import deepcopy
 
@@ -13,6 +13,28 @@ def least_squares(x: array, y: array):
     :return: The estimated coefficient array for the linear system.
     """
     return multi_dot([inv(dot(x.T, x)), x.T, y])
+
+
+def least_squares_nla(A: array, y: array):
+    """
+    Solving the coefficient of a linear system by given input variables.
+    :param A: A 2-D array with column as feature dimension and row as sample dimension, without 1 vector.
+    :param y: The target 1-D array.
+    :return: The estimated coefficient array for the linear system.
+    """
+    A = A.reshape(max(A.shape), -1)
+    cov_A = cov(A.T)
+    sigma = []
+    for series in A.T:
+        covariance = cov(y.reshape(1, -1), series)
+        sigma.append(covariance[0][1])
+    sigma = array(sigma).reshape(-1, 1)
+    mu_y = mean(y)
+    mu_A = mean(A, axis=0)
+    b = dot(inv(cov_A), sigma)
+    a = mu_y - multi_dot([mu_A, inv(cov_A), sigma])
+    coefficient = vstack([a, b])
+    return a, b, coefficient
 
 
 def implied_volatility():

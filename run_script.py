@@ -5,7 +5,7 @@ from Decomposition import LU, EquationSimulation, OnePeriodMarketModel, trans_di
     compute_discount_factor, Cholesky
 
 from OtherFunctions import compute_tri_diagonal_symmetric, compute_root_quadratic_equation
-from OLRRegression import least_squares, PortfolioOptimize
+from OLRRegression import least_squares, least_squares_nla, PortfolioOptimize
 
 
 np.set_printoptions(suppress=True)
@@ -357,35 +357,63 @@ if __name__ == "__main__":
     # x = least_squares(A, y)
     # print(x)
 
-    # # Question 15
-    mu = np.array([0.02, 0.0175, 0.025, 0.015])
-    cov_matrix = np.array([
-        [0.09, 0.01, 0.03, -0.015],
-        [0.01, 0.0625, -0.02, -0.01],
-        [0.03, -0.02, 0.1225, 0.02],
-        [-0.015, -0.01, 0.02, 0.0576]
+    # Question 15
+    y = np.array([
+        4.58, 4.71, 4.72, 4.78, 4.77, 4.75, 4.71, 4.72,
+        4.76, 4.73, 4.75, 4.75, 4.73, 4.71, 4.71
+    ]).reshape(-1, 1)
+    A = np.array([
+        [1, 4.69, 4.57, 4.63],
+        [1, 4.81, 4.69, 4.73],
+        [1, 4.81, 4.7, 4.74],
+        [1, 4.79, 4.77, 4.81],
+        [1, 4.79, 4.77, 4.8],
+        [1, 4.83, 4.73, 4.79],
+        [1, 4.81, 4.72, 4.76],
+        [1, 4.81, 4.74, 4.77],
+        [1, 4.83, 4.77, 4.8],
+        [1, 4.81, 4.75, 4.77],
+        [1, 4.82, 4.77, 4.8],
+        [1, 4.82, 4.76, 4.8],
+        [1, 4.8, 4.75, 4.78],
+        [1, 4.78, 4.72, 4.73],
+        [1, 4.79, 4.71, 4.73]
     ])
-    emu, rf = 0.0225, 0.01
-    mu = mu - rf
-    # print(mu)
+
+    a, b, c = least_squares_nla(A[:, 1:], y)
+    print(a)
+    print(b)
+    print(c)
+
+    # # # Question 16
+    # mu = np.array([0.02, 0.0175, 0.025, 0.015])
+    # cov_matrix = np.array([
+    #     [0.09, 0.01, 0.03, -0.015],
+    #     [0.01, 0.0625, -0.02, -0.01],
+    #     [0.03, -0.02, 0.1225, 0.02],
+    #     [-0.015, -0.01, 0.02, 0.0576]
+    # ])
+    # emu, rf = 0.0225, 0.01
+    # mu = mu - rf
+    # # print(mu)
+    # #
+    # po = PortfolioOptimize(mu, cov_matrix)
+    # # w = po.min_variance_weights(emu, rf)
+    # # sigma = po.min_variance_std(emu, rf)
+    # # print("Weights:", w)
+    # # print("Sigma:", sigma)
+    # # w_tan, w_cash, w = po.min_var_tangency(emu, rf)
+    # # print("Tangency weights:", w_tan)
+    # # print("Cash weighting:", w_cash)
+    # # print("Asset weighting:", w)
     #
-    po = PortfolioOptimize(mu, cov_matrix)
-    # w = po.min_variance_weights(emu, rf)
-    # sigma = po.min_variance_std(emu, rf)
-    # print("Weights:", w)
-    # print("Sigma:", sigma)
-    # w_tan, w_cash, w = po.min_var_tangency(emu, rf)
+    # w, w_cash = po.max_return_weights(0.27)
+    # print("Asset weight:", w)
+    # print("Cash weight:", w_cash)
+    # p_mu = po.max_return_mu(0.27, 0.01)
+    # print("Portfolio return:", p_mu)
+    #
+    # w_tan, w_cash, w = po.max_return_tangency(0.27)
     # print("Tangency weights:", w_tan)
     # print("Cash weighting:", w_cash)
     # print("Asset weighting:", w)
-
-    w, w_cash = po.max_return_weights(0.27)
-    print("Asset weight:", w)
-    print("Cash weight:", w_cash)
-    p_mu = po.max_return_mu(0.27, 0.01)
-    print("Portfolio return:", p_mu)
-
-    w_tan, w_cash, w = po.max_return_tangency(0.27)
-    print("Tangency weights:", w_tan)
-    print("Cash weighting:", w_cash)
-    print("Asset weighting:", w)
