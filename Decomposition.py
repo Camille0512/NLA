@@ -1,6 +1,6 @@
 from copy import deepcopy
 from numpy.linalg import det
-from numpy import array, dot, diag, zeros, log, exp, ones, matrix, append, around, square, sqrt, matrix
+from numpy import array, dot, diag, zeros, log, exp, ones, matrix, append, around, square, sqrt, matrix, around
 import matplotlib.pyplot as plt
 from pandas import DataFrame
 
@@ -88,7 +88,7 @@ class LU:
         x[0] = b[0] / L[0][0]
         for i in range(1, n):
             numerator = b[i] - sum([j * x[e] for e, j in enumerate(L[i][:i])])
-            x[i] = round(numerator / L[i][i], d)
+            x[i] = around(numerator / L[i][i], d)
         return x
 
     def backward_substitution(self, U=None, b=None, d=6):
@@ -108,7 +108,7 @@ class LU:
         x[n] = b[n] / U[n][n]
         for i in range(1, n + 1):
             numerator = b[n - i] - sum([j * x[n - e] for e, j in enumerate(U[n - i][(n - i + 1):][::-1])])
-            x[n - i] = round(numerator / U[n - i][n - i], d)
+            x[n - i] = around(numerator / U[n - i][n - i], d)
         return x
 
     def _update_LU_A(self, A, ind: int):
@@ -267,26 +267,26 @@ class Cholesky(LU):
         :return: Computed U.
         """
         p = inx - 1
-        if not U:
+        if U is None:
             U = self.U.copy()
-        if not A:
+        if A is None:
             A = self.A.copy()
         U[p][p] = sqrt(A[p][p])
-        for k in range(p, self.n):
+        for k in range(p + 1, self.n):
             U[p][k] = A[p][k] / U[p][p]
         return U
 
-    def _update_A(self, A: list, inx: int):
+    def _update_A(self, inx: int, A=None):
         """
         Update the entries of matrix A.
-        :param A: The matrix A of the linear system.
         :param inx: The index for the position of A and U, a pointer.
+        :param A: The matrix A of the linear system.
         :return: The updated matrix A.
         """
-        if not A:
+        if A is None:
             raise ValueError("Please input matrix A.")
         for j in range(inx, self.n):
-            for k in range(inx, self.n):
+            for k in range(j, self.n):
                 A[j][k] = A[j][k] - self.U[inx - 1][j] * self.U[inx - 1][k]
         return A
 
@@ -301,13 +301,13 @@ class Cholesky(LU):
         if A is None:
             A = self.A.copy()
 
-        self.n = len(self.A[0])
+        self.n = len(A[0])
         if not v.check_spd(matrix(A)):
             raise ValueError("The matrix cannot be implemented Cholesky decomposition.")
         self.U = self.create_clean_matrix()
 
         for i in range(1, self.n):
-            self.U = self.compute_U(inx=i)
+            self.U = self.compute_U(A=A, inx=i)
             A = self._update_A(A=A, inx=i)
         self.U[self.n - 1][self.n - 1] = sqrt(A[self.n - 1][self.n - 1])
         return self.U
@@ -325,13 +325,13 @@ class Cholesky(LU):
                 raise ValueError("Please initiate A or input A for the method.")
             A = deepcopy(self.A)
         if self.n is None:
-            self.n = self.A.shape[0]
-        if not U:
-            self.U = self.Cholesky_decomposition(A)
+            self.n = A.shape[0]
+        if U is None:
+            self.U = self.Cholesky_decomposition(deepcopy(A))
         else:
             self.U = deepcopy(U)
 
-        self.U_t = [list(arr) for arr in array(self.U)]
+        self.U_t = [list(arr) for arr in array(self.U).T]
         y = self.forward_substitution(L=self.U_t, b=b)
         x = self.backward_substitution(U=self.U, b=y)
         return x
@@ -339,7 +339,7 @@ class Cholesky(LU):
     def compute_linear_system(self, B: list, A=None, given_U=False):
         """
         Solve the multiple linear system for the same given matrix.
-        :param B: The given results for the linear system (the right side of the equations).
+        :param B: The given vector for the linear system (the right side of the equations).
         :param A: The given matrix for the linear system.
         :param given_U: Whether use the previous given U matrix, default False (not use).
         :return: The solution for the multiple linear system x list.
@@ -353,6 +353,7 @@ class Cholesky(LU):
 
         if not given_U:
             self.U = self.Cholesky_decomposition(A)
+        B = array(deepcopy(B)).reshape(-1, 1)
         s = B.shape[1]
         X = diag(zeros(s))
         for e, b in enumerate(B):

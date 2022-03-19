@@ -5,6 +5,7 @@ from Decomposition import LU, EquationSimulation, OnePeriodMarketModel, trans_di
     compute_discount_factor, Cholesky
 
 from OtherFunctions import compute_tri_diagonal_symmetric, compute_root_quadratic_equation
+from OLRRegression import least_squares, PortfolioOptimize
 
 
 np.set_printoptions(suppress=True)
@@ -340,5 +341,51 @@ if __name__ == "__main__":
     # print("w:\n", w)
     # print("\nEquation:\n", equations)
 
-    # Question 13
-    print(compute_root_quadratic_equation(0.112, -0.192, 0.0644))
+    # # Question 13
+    # print(compute_root_quadratic_equation(0.112, -0.192, 0.0644))
+
+    # # Question 14
+    # A = [
+    #     [1, -1175 - i * 25] for i in range(12)
+    # ]
+    # A += [[1, -1500], [1, -1550], [1, -1575], [1, -1600]]
+    # A = np.array(A)
+    # y = np.array([
+    #     178.8, 154, 129.05, 104.2, 79, 54, 29.05, 4.25,
+    #     -20.4, -45.45, -70.3, -95.95, -144.7, -195, -219.8, -244.5
+    # ])
+    # x = least_squares(A, y)
+    # print(x)
+
+    # # Question 15
+    mu = np.array([0.02, 0.0175, 0.025, 0.015])
+    cov_matrix = np.array([
+        [0.09, 0.01, 0.03, -0.015],
+        [0.01, 0.0625, -0.02, -0.01],
+        [0.03, -0.02, 0.1225, 0.02],
+        [-0.015, -0.01, 0.02, 0.0576]
+    ])
+    emu, rf = 0.0225, 0.01
+    mu = mu - rf
+    # print(mu)
+    #
+    po = PortfolioOptimize(mu, cov_matrix)
+    # w = po.min_variance_weights(emu, rf)
+    # sigma = po.min_variance_std(emu, rf)
+    # print("Weights:", w)
+    # print("Sigma:", sigma)
+    # w_tan, w_cash, w = po.min_var_tangency(emu, rf)
+    # print("Tangency weights:", w_tan)
+    # print("Cash weighting:", w_cash)
+    # print("Asset weighting:", w)
+
+    w, w_cash = po.max_return_weights(0.27)
+    print("Asset weight:", w)
+    print("Cash weight:", w_cash)
+    p_mu = po.max_return_mu(0.27, 0.01)
+    print("Portfolio return:", p_mu)
+
+    w_tan, w_cash, w = po.max_return_tangency(0.27)
+    print("Tangency weights:", w_tan)
+    print("Cash weighting:", w_cash)
+    print("Asset weighting:", w)
