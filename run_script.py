@@ -1,11 +1,13 @@
+import pandas as pd
 import numpy as np
 from numpy.linalg import matrix_rank, inv, eigvals
+from datetime import datetime
 from collections import OrderedDict
 from Decomposition import LU, EquationSimulation, OnePeriodMarketModel, trans_discount_factor_zero_rate, \
     compute_discount_factor, Cholesky
 
 from OtherFunctions import compute_tri_diagonal_symmetric, compute_root_quadratic_equation
-from OLRRegression import least_squares, least_squares_nla, PortfolioOptimize
+from OLRRegression import OLR, PortfolioOptimize
 
 
 np.set_printoptions(suppress=True)
@@ -180,15 +182,15 @@ if __name__ == "__main__":
     # print(res)
 
     # # For Q5 & Q6
-    all_securities = {
-        "P1175": 46.6, "P1200": 51.55, "P1225": 57.15, "P1250": 63.3, "P1275": 70.15,
-        "P1300": 77.7, "P1325": 86.2, "P1350": 95.3, "P1375": 105.3,
-        "P1400": 116.55, "P1425": 129, "P1450": 143.2,
-        "P1500": 173.95, "P1550": 210.8, "P1575": 230.9, "P1600": 252.4,
-        "C1175": 225.4, "C1200": 205.55, "C1225": 186.2, "C1250": 167.5, "C1275": 149.15,
-        "C1300": 131.7, "C1325": 115.25, "C1350": 99.55, "C1375": 84.9, "C1400": 71.1,
-        "C1425": 58.7, "C1450": 47.25, "C1500": 29.25, "C1550": 15.8, "C1575": 11.1, "C1600": 7.9
-    }
+    # all_securities = {
+    #     "P1175": 46.6, "P1200": 51.55, "P1225": 57.15, "P1250": 63.3, "P1275": 70.15,
+    #     "P1300": 77.7, "P1325": 86.2, "P1350": 95.3, "P1375": 105.3,
+    #     "P1400": 116.55, "P1425": 129, "P1450": 143.2,
+    #     "P1500": 173.95, "P1550": 210.8, "P1575": 230.9, "P1600": 252.4,
+    #     "C1175": 225.4, "C1200": 205.55, "C1225": 186.2, "C1250": 167.5, "C1275": 149.15,
+    #     "C1300": 131.7, "C1325": 115.25, "C1350": 99.55, "C1375": 84.9, "C1400": 71.1,
+    #     "C1425": 58.7, "C1450": 47.25, "C1500": 29.25, "C1550": 15.8, "C1575": 11.1, "C1600": 7.9
+    # }
     # # Question 5
     # # model_opt = ["P1175", "P1200", "P1250", "P1350", "C1350", "C1375", "C1450", "C1550", "C1600"]
     # model_opt = ["P1175", "P1200", "P1300", "P1400", "C1400", "C1450", "C1550", "C1600"]
@@ -354,36 +356,43 @@ if __name__ == "__main__":
     #     178.8, 154, 129.05, 104.2, 79, 54, 29.05, 4.25,
     #     -20.4, -45.45, -70.3, -95.95, -144.7, -195, -219.8, -244.5
     # ])
-    # x = least_squares(A, y)
+    # olr = OLR(A, y)
+    # x = olr.least_squares(A, y)
     # print(x)
+    # iv = olr.implied_volatility(option_prices={"call": 225.4, "put": 46.6}, X=1175, t=199/252)
+    # print(iv)
+    # iv = olr.implied_volatility(option_prices={"call": 131.7, "put": 77.7}, X=1300, t=199/252)
+    # print(iv)
 
-    # Question 15
-    y = np.array([
-        4.58, 4.71, 4.72, 4.78, 4.77, 4.75, 4.71, 4.72,
-        4.76, 4.73, 4.75, 4.75, 4.73, 4.71, 4.71
-    ]).reshape(-1, 1)
-    A = np.array([
-        [1, 4.69, 4.57, 4.63],
-        [1, 4.81, 4.69, 4.73],
-        [1, 4.81, 4.7, 4.74],
-        [1, 4.79, 4.77, 4.81],
-        [1, 4.79, 4.77, 4.8],
-        [1, 4.83, 4.73, 4.79],
-        [1, 4.81, 4.72, 4.76],
-        [1, 4.81, 4.74, 4.77],
-        [1, 4.83, 4.77, 4.8],
-        [1, 4.81, 4.75, 4.77],
-        [1, 4.82, 4.77, 4.8],
-        [1, 4.82, 4.76, 4.8],
-        [1, 4.8, 4.75, 4.78],
-        [1, 4.78, 4.72, 4.73],
-        [1, 4.79, 4.71, 4.73]
-    ])
-
-    a, b, c = least_squares_nla(A[:, 1:], y)
-    print(a)
-    print(b)
-    print(c)
+    # # Question 15
+    # y = np.array([
+    #     4.58, 4.71, 4.72, 4.78, 4.77, 4.75, 4.71, 4.72,
+    #     4.76, 4.73, 4.75, 4.75, 4.73, 4.71, 4.71
+    # ]).reshape(-1, 1)
+    # A = np.array([
+    #     [1, 4.69, 4.57, 4.63],
+    #     [1, 4.81, 4.69, 4.73],
+    #     [1, 4.81, 4.7, 4.74],
+    #     [1, 4.79, 4.77, 4.81],
+    #     [1, 4.79, 4.77, 4.8],
+    #     [1, 4.83, 4.73, 4.79],
+    #     [1, 4.81, 4.72, 4.76],
+    #     [1, 4.81, 4.74, 4.77],
+    #     [1, 4.83, 4.77, 4.8],
+    #     [1, 4.81, 4.75, 4.77],
+    #     [1, 4.82, 4.77, 4.8],
+    #     [1, 4.82, 4.76, 4.8],
+    #     [1, 4.8, 4.75, 4.78],
+    #     [1, 4.78, 4.72, 4.73],
+    #     [1, 4.79, 4.71, 4.73]
+    # ])
+    #
+    # olr = OLR(A[:, 1:], y)
+    # c = olr.least_squares_nla()
+    # print(c)
+    # # print(olr.result_dict)
+    # error = olr.least_squares_error()
+    # print(error)
 
     # # # Question 16
     # mu = np.array([0.02, 0.0175, 0.025, 0.015])
@@ -417,3 +426,110 @@ if __name__ == "__main__":
     # print("Tangency weights:", w_tan)
     # print("Cash weighting:", w_cash)
     # print("Asset weighting:", w)
+
+    # Question 17
+    # T = np.array([
+    #     [4.69, 4.58, 4.57, 4.63],
+    #     [4.81, 4.71, 4.69, 4.73],
+    #     [4.81, 4.72, 4.7, 4.74],
+    #     [4.79, 4.78, 4.77, 4.81],
+    #     [4.79, 4.77, 4.77, 4.8],
+    #     [4.83, 4.75, 4.73, 4.79],
+    #     [4.81, 4.71, 4.72, 4.76],
+    #     [4.81, 4.72, 4.74, 4.77],
+    #     [4.83, 4.76, 4.77, 4.8],
+    #     [4.81, 4.73, 4.75, 4.77],
+    #     [4.82, 4.75, 4.77, 4.8],
+    #     [4.82, 4.75, 4.76, 4.8],
+    #     [4.8, 4.73, 4.75, 4.78],
+    #     [4.78, 4.71, 4.72, 4.73],
+    #     [4.79, 4.71, 4.71, 4.73]
+    # ])
+
+    # t2 = np.array([
+    #     1.69, 1.81, 1.81, 1.79, 1.79, 1.83, 1.81, 1.81, 1.83,
+    #     1.81, 1.82, 1.82, 1.8, 1.78, 1.79
+    # ]).reshape(-1, 1)
+    # t3 = np.array([
+    #     2.58, 2.71, 2.72, 2.78, 2.77, 2.75, 2.71, 2.72, 2.76,
+    #     2.73, 2.75, 2.75, 2.73, 2.71, 2.71
+    # ]).reshape(-1, 1)
+    # t5 = np.array([
+    #     3.57, 3.69, 3.7, 3.77, 3.77, 3.73, 3.72, 3.74, 3.77,
+    #     3.75, 3.77, 3.76, 3.75, 3.72, 3.71
+    # ]).reshape(-1, 1)
+    # t10 = np.array([
+    #     4.63, 4.73, 4.74, 4.81, 4.8, 4.79, 4.76, 4.77, 4.8,
+    #     4.77, 4.8, 4.8, 4.78, 4.73, 4.73
+    # ]).reshape(-1, 1)
+    # T = np.hstack([t2, t3, t5, t10])
+
+    # y = T[:, 1]
+    # A = np.hstack([T[:, 0].reshape(-1, 1), T[:, 2:]])
+    # olr = OLR(A, y)
+    # coef = olr.least_squares_nla()
+    # res = olr.result_dict
+    # print(coef)
+    # # print(res)
+    # error = olr.least_squares_error()
+    # print(error)
+    #
+    # A_ = olr.x[:, :-1]
+    # olr.result_dict = {}
+    # olr.result_dict["coefficient"] = np.array([[0], [2 / 3], [1 / 3]])
+    # olr.x = A_
+    # error2 = olr.least_squares_error()
+    # print(error2)
+    #
+    # eqs = EquationSimulation()
+    # intervals = [2, 5, 10]
+    # t3_hat = []
+    # for f_x in A:
+    #     w, equations = eqs.cubic_spline_interpolation_cd(intervals, f_x)
+    #     a, b, c, d = equations[(2, 5)]
+    #     print("a:{:.4f} b:{:.4f} c:{:.4f} d:{:.4f}".format(a, b, c, d))
+    #     estimate = a + b * 3 + c * (3 ** 2) + d * (3 ** 3)
+    #     t3_hat.append(estimate)
+    # t3_hat = np.array(t3_hat).reshape(-1, 1)
+    # print(t3_hat)
+    # error3 = olr.compute_error(y, t3_hat)
+    # print(error3)
+
+    # # Question 18
+    # file = "S_P500_ETF_Option_0917.xlsx"
+    # data = pd.read_excel(file, header=[0, 1])
+    # y = np.array(
+    #     (data[("Calls", "Bid")] + data[("Calls", "Ask")]) / 2 - (data[("Puts", "Bid")] + data[("Puts", "Ask")]) / 2
+    # ).reshape(-1, 1)
+    # A = np.array([
+    #     np.ones(len(data)),
+    #     np.array(-data[("Calls", "Strike")])
+    # ]).T
+    # # print(A)
+    # # print(y)
+    #
+    # olr = OLR(A, y)
+    # coef = olr.least_squares(solver="linalg")
+    # print(coef)
+    #
+    # t = (datetime.strptime("2017-09-29", "%Y-%m-%d") - datetime.strptime("2017-03-16", "%Y-%m-%d")).days
+    # t -= 60
+    #
+    # iv_df = pd.DataFrame(columns=["Strike", "IV Call", "IV Put"])
+    # for i in range(len(data)):
+    #     option_prices = {
+    #         "call": (data.loc[i, ("Calls", "Bid")] + data.loc[i, ("Calls", "Ask")]) / 2,
+    #         "put": (data.loc[i, ("Puts", "Bid")] + data.loc[i, ("Puts", "Ask")]) / 2
+    #     }
+    #     X = data.loc[i, ("Calls", "Strike")]
+    #     res = olr.implied_volatility(option_prices, X, t, function="polya")
+    #     val = res[X]
+    #     iv_df.loc[len(iv_df)] = [X, val["call"], val["put"]]
+    # print(iv_df)
+
+    # Question 19
+    mu = np.array([0.08, 0.04]).reshape(-1, 1)
+    cov = np.array([
+        [0.2 ** 2, 0.2 * 0.15 * 0.25],
+        [0.2 * 0.15 * 0.25, 0.15 ** 2]
+    ])

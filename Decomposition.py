@@ -369,7 +369,7 @@ class EquationSimulation(LU):
         self.M = None
         self.v = None
 
-    def _interpolation_matrix_lu(self, intervals: list):
+    def interpolation_matrix_lu(self, intervals: list):
         """
         Generate the linear system for the cubic spline interpolation.
         :param intervals: The intervals for the problem.
@@ -417,14 +417,17 @@ class EquationSimulation(LU):
         M[-1][-2], M[-1][-1] = 2, 6 * intervals[n]
         self.M = M
 
-    def _interpolation_matrix_cd(self, intervals: list):
+    def interpolation_matrix_cd(self, intervals: list):
         """
         Generate the linear system for the cubic spline interpolation by using Cholesky decomposition.
         :param intervals: The intervals for the problem.
         :return: The matrix to solve the cubic spline interpolation problem.
         """
-        n = self.n
-        M = [[0] * (n) for i in range(n)]
+        if self.n is None:
+            n = len(intervals) - 2
+        else:
+            n = self.n
+        M = [[0] * n for i in range(n)]
         for i in range(n):
             M[i][i] = 2 * (intervals[i + 2] - intervals[i])
             if i < n - 1:
@@ -475,7 +478,7 @@ class EquationSimulation(LU):
         """
         if not v.check_dimensions(intervals, f_x):
             raise ValueError("Please input the invervals and f_x with same dimensions.")
-        self._interpolation_matrix_lu(intervals)
+        self.interpolation_matrix_lu(intervals)
         self._interpolation_vector_lu(f_x)
         _ = self.lu_row_pivoting(self.M)
         x = self._dfc_rp(b=self.v)
@@ -496,7 +499,7 @@ class EquationSimulation(LU):
             raise ValueError("Please input the invervals and f_x with same dimensions.")
         self.n = len(intervals) - 2
         self._interpolation_vector_cd(intervals, f_x)
-        self._interpolation_matrix_cd(intervals=intervals)
+        self.interpolation_matrix_cd(intervals=intervals)
         w = self._dfc_rp(A=self.M, b=self.v)
         w = [0] + w + [0]
         equations, m = {}, len(intervals) - 1
