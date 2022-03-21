@@ -13,6 +13,9 @@ from OLRRegression import OLR, PortfolioOptimize
 np.set_printoptions(suppress=True)
 
 
+# TODO: write unit test (Since the samples are not modified together with the change of imported self-defined functions
+#  or class, they might have errors if run directly.)
+
 if __name__ == "__main__":
     # # Question 1
     # lu = LU()
