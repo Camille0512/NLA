@@ -190,7 +190,7 @@ class PortfolioOptimize(Cholesky):
             mu = deepcopy(self.mu)
         if covariance is None:
             covariance = deepcopy(self.covariance)
-        mu = mu.reshape(-1, 1)
+        mu = mu.reshape(-1, 1) - rf
         if solver == "cholesky":
             x = array(self.compute_single_linear_system(b=mu, A=covariance))
             w = (emu - rf) / dot(mu.T, x) * x
@@ -213,7 +213,7 @@ class PortfolioOptimize(Cholesky):
             mu = deepcopy(self.mu)
         if covariance is None:
             covariance = deepcopy(self.covariance)
-        mu = mu.reshape(-1, 1)
+        mu = mu.reshape(-1, 1) - rf
         if solver == "cholesky":
             x = array(self.compute_single_linear_system(b=mu, A=covariance))
             sigma = (emu - rf) / sqrt(dot(mu.T, x))
@@ -235,7 +235,7 @@ class PortfolioOptimize(Cholesky):
             mu = deepcopy(self.mu)
         if covariance is None:
             covariance = deepcopy(self.covariance)
-        mu = mu.reshape(-1, 1)
+        mu = mu.reshape(-1, 1) - rf
         one = ones(mu.shape[0]).reshape(1, -1)
 
         if solver == "cholesky":
@@ -248,10 +248,11 @@ class PortfolioOptimize(Cholesky):
         w = (1 - w_cash) * w_T
         return w_T.reshape(1, -1)[0], w_cash[0][0], w.reshape(1, -1)[0]
 
-    def max_return_weights(self, e_sigma: float, mu=None, covariance=None, solver="cholesky"):
+    def max_return_weights(self, e_sigma: float, rf: float, mu=None, covariance=None, solver="cholesky"):
         """
         Compute the weightings of the maximum return portfolio.
         :param e_sigma: The expected volatility of a portfolio.
+        :param rf: The risk-free rate.
         :param mu: The return array of the risky assets, in 1-D array format.
         :param covariance: The covariance matrix, in 2-D array format.
         :param solver: Which solver to use, cholesky or linalg solver.
@@ -261,7 +262,7 @@ class PortfolioOptimize(Cholesky):
             mu = deepcopy(self.mu)
         if covariance is None:
             covariance = deepcopy(self.covariance)
-        mu = mu.reshape(-1, 1)
+        mu = mu.reshape(-1, 1) - rf
         if solver == "cholesky":
             x = array(self.compute_single_linear_system(b=mu, A=covariance))
             w = (e_sigma / sqrt(dot(mu.T, x))) * x
@@ -284,7 +285,7 @@ class PortfolioOptimize(Cholesky):
             mu = deepcopy(self.mu)
         if covariance is None:
             covariance = deepcopy(self.covariance)
-        mu = mu.reshape(-1, 1)
+        mu = mu.reshape(-1, 1) - rf
         if solver == "cholesky":
             x = array(self.compute_single_linear_system(b=mu, A=covariance))
             p_mu = rf + e_sigma * sqrt(dot(mu.T, x))
@@ -292,10 +293,11 @@ class PortfolioOptimize(Cholesky):
             p_mu = rf + e_sigma * sqrt(multi_dot([mu.T, inv(covariance), mu]))
         return p_mu.reshape(1, -1)[0][0]
 
-    def max_return_tangency(self, e_sigma: float, mu=None, covariance=None, solver="cholesky"):
+    def max_return_tangency(self, e_sigma: float, rf: float, mu=None, covariance=None, solver="cholesky"):
         """
         Using a tangency portfolio to construct maximum return portfolio.
         :param e_sigma: The expected volatility of a portfolio.
+        :param rf: The risk-free rate.
         :param mu: The return array of the risky assets, in 1-D array format.
         :param covariance: The covariance matrix, in 2-D array format.
         :param solver: Which solver to use, cholesky or linalg solver.
@@ -305,7 +307,7 @@ class PortfolioOptimize(Cholesky):
             mu = deepcopy(self.mu)
         if covariance is None:
             covariance = deepcopy(self.covariance)
-        mu = mu.reshape(-1, 1)
+        mu = mu.reshape(-1, 1) - rf
         one = ones(mu.shape[0]).reshape(1, -1)
 
         if solver == "cholesky":
@@ -320,9 +322,10 @@ class PortfolioOptimize(Cholesky):
         w = (1 - w_cash) * w_T
         return w_T.reshape(1, -1)[0], w_cash[0][0], w.reshape(1, -1)[0]
 
-    def tangency_portfolip(self, mu=None, covariance=None, solver="cholesky"):
+    def tangency_portfolip(self, rf: float, mu=None, covariance=None, solver="cholesky"):
         """
         Computing the tangency portfolio asset allocation.
+        :param rf: The risk-free rate.
         :param mu: The return array of the risky assets, in 1-D array format.
         :param covariance: The covariance matrix, in 2-D array format.
         :param solver: Which solver to use, cholesky or linalg solver.
@@ -332,7 +335,7 @@ class PortfolioOptimize(Cholesky):
             mu = deepcopy(self.mu)
         if covariance is None:
             covariance = deepcopy(self.covariance)
-        mu = mu.reshape(-1, 1)
+        mu = mu.reshape(-1, 1) - rf
         one = ones(mu.shape[0]).reshape(1, -1)
 
         if solver == "cholesky":

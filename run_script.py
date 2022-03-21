@@ -394,38 +394,37 @@ if __name__ == "__main__":
     # error = olr.least_squares_error()
     # print(error)
 
-    # # # Question 16
-    # mu = np.array([0.02, 0.0175, 0.025, 0.015])
-    # cov_matrix = np.array([
-    #     [0.09, 0.01, 0.03, -0.015],
-    #     [0.01, 0.0625, -0.02, -0.01],
-    #     [0.03, -0.02, 0.1225, 0.02],
-    #     [-0.015, -0.01, 0.02, 0.0576]
-    # ])
-    # emu, rf = 0.0225, 0.01
-    # mu = mu - rf
-    # # print(mu)
-    # #
-    # po = PortfolioOptimize(mu, cov_matrix)
-    # # w = po.min_variance_weights(emu, rf)
-    # # sigma = po.min_variance_std(emu, rf)
-    # # print("Weights:", w)
-    # # print("Sigma:", sigma)
-    # # w_tan, w_cash, w = po.min_var_tangency(emu, rf)
-    # # print("Tangency weights:", w_tan)
-    # # print("Cash weighting:", w_cash)
-    # # print("Asset weighting:", w)
+    # # Question 16
+    mu = np.array([0.02, 0.0175, 0.025, 0.015])
+    cov_matrix = np.array([
+        [0.09, 0.01, 0.03, -0.015],
+        [0.01, 0.0625, -0.02, -0.01],
+        [0.03, -0.02, 0.1225, 0.02],
+        [-0.015, -0.01, 0.02, 0.0576]
+    ])
+    emu, rf = 0.0225, 0.01
+    # print(mu)
     #
-    # w, w_cash = po.max_return_weights(0.27)
-    # print("Asset weight:", w)
-    # print("Cash weight:", w_cash)
-    # p_mu = po.max_return_mu(0.27, 0.01)
-    # print("Portfolio return:", p_mu)
-    #
-    # w_tan, w_cash, w = po.max_return_tangency(0.27)
-    # print("Tangency weights:", w_tan)
-    # print("Cash weighting:", w_cash)
-    # print("Asset weighting:", w)
+    po = PortfolioOptimize(mu, cov_matrix)
+    w = po.min_variance_weights(emu, rf)
+    sigma = po.min_variance_std(emu, rf)
+    print("Weights:", w)
+    print("Sigma:", sigma)
+    w_tan, w_cash, w = po.min_var_tangency(emu, rf)
+    print("Tangency weights:", w_tan)
+    print("Cash weighting:", w_cash)
+    print("Asset weighting:", w)
+
+    w, w_cash = po.max_return_weights(0.27, rf)
+    print("Asset weight:", w)
+    print("Cash weight:", w_cash)
+    p_mu = po.max_return_mu(0.27, 0.01)
+    print("Portfolio return:", p_mu)
+
+    w_tan, w_cash, w = po.max_return_tangency(0.27, rf)
+    print("Tangency weights:", w_tan)
+    print("Cash weighting:", w_cash)
+    print("Asset weighting:", w)
 
     # Question 17
     # T = np.array([
