@@ -31,7 +31,7 @@ Unblock the `run_script.py` according to the `Question *` to test different func
 
     Mainly related functions based on or using *LU decomposition*.
 
-    Offers the following function:
+    Offers the following functions:
 
     - Forward substitution
 
@@ -55,7 +55,7 @@ Unblock the `run_script.py` according to the `Question *` to test different func
 
     Inherit from `class LU`, mainly implement the *Arrow-Debreu one period market model* for option pricing.
 
-    Offers the following function:
+    Offers the following functions:
 
     - Check complete market
     - Check arbitrage free
@@ -64,11 +64,38 @@ Unblock the `run_script.py` according to the `Question *` to test different func
     - Error computation (average absolute value / root mean squared error)
     - Graph of the errors for all the securities in the market
 
-- **Eigens.py**
+- **OLRRegression.py**
 
-  Functions for the eigenvector and eigenvalue computation under special cases using theories.
+  - `Class OLR`
 
-- **MatrixVerifications.py**
+    Inherit from the `class Cholesky`, mainly responsible for the *Least squares* computation by using NLA techniques.
+
+    Offers the following functions:
+
+    - OLR equation estimates
+    - Compute errors
+    - A special function provided according to the paper: https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2908494
+    - Implied volatility computation according to the BSM
+
+  - `Class PortfolioOptimize`
+
+    Inherit from the `class Cholesky`, mainly responsible for portfolio optimization based on mean-variance theory.
+
+    Offers the following functions:
+
+    - Tangency portfolio weighting computation
+    - Min variance weighting computation
+    - Min variance portfolio standard variance computation
+    - Max return weighting computation
+    - Max return portfolio return computation
+    - Min variance portfolio without cash position computation
+    - Min variance portfolio without cash position standard variance computation
+
+- **OtherFunctions.py**
+
+  Functions that support for the lectures.
+
+- **Verifications.py**
 
   Mainly contains functions for matrix checking during the previous functions.
 

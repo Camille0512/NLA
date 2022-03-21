@@ -151,7 +151,7 @@ class OLR(Cholesky):
         :param initial: The initial volatility, default 0.25.
         :param threshold: The threshold for Newton's method iteration, default 0.000001.
         :param function: The function that is going to use in the computation of BS model CDF item.
-        :return: Both call and put implied volatility, stored in a dictionary. Together with interation times.
+        :return: Both call and put implied volatility, stored in a dictionary.
         """
         coefficient = self.result_dict["coefficient"]
         PVF, disc = coefficient.ravel()[0], coefficient.ravel()[1]
