@@ -3,6 +3,7 @@ from numpy import matrix, array, mean, dot, diag, sqrt
 from math import sin, cos, pi
 from collections import defaultdict
 from Verifications import check_root
+import pandas_market_calendars as mcal
 
 
 def compute_tri_diagonal_symmetric(d: int, a: int, n: int, digit=6):
@@ -62,3 +63,17 @@ def mean_normalized_corr(norm_series: array):
         M.append(paradigm[0][0])
     M = diag(array(M))
     return multi_dot([M, norm_series, norm_series.T, M])
+
+
+def trading_days_computation(ex: str, start: str, end: str, return_type="list"):
+    """
+    Compute the trading days between given start date and end date.
+    :param ex: The exchange name, referring to the market.
+    :param start: The start date, in format "%Y-%m-%d".
+    :param end: The end date, in format "%Y-%m-%d".
+    :param return_type: The return type of the date, either "date list" (list) or "date length" (int).
+    :return: The trading date list between the given start date and end date.
+    """
+    symbol = mcal.get_calendar(ex)
+    date_list = symbol.valid_days(start_date=start, end_date=end)
+    return date_list if return_type == "list" else len(date_list)

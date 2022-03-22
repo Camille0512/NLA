@@ -3,10 +3,11 @@ import numpy as np
 from numpy.linalg import matrix_rank, inv, eigvals
 from datetime import datetime
 from collections import OrderedDict
+import pandas_market_calendars as mcal
+
 from Decomposition import LU, EquationSimulation, OnePeriodMarketModel, trans_discount_factor_zero_rate, \
     compute_discount_factor, Cholesky
-
-from OtherFunctions import compute_tri_diagonal_symmetric, compute_root_quadratic_equation
+from OtherFunctions import compute_tri_diagonal_symmetric, compute_root_quadratic_equation, trading_days_computation
 from OLRRegression import OLR, PortfolioOptimize
 
 
@@ -452,34 +453,34 @@ if __name__ == "__main__":
     #     [4.79, 4.71, 4.71, 4.73]
     # ])
 
-    t2 = np.array([
-        1.69, 1.81, 1.81, 1.79, 1.79, 1.83, 1.81, 1.81, 1.83,
-        1.81, 1.82, 1.82, 1.8, 1.78, 1.79
-    ]).reshape(-1, 1)
-    t3 = np.array([
-        2.58, 2.71, 2.72, 2.78, 2.77, 2.75, 2.71, 2.72, 2.76,
-        2.73, 2.75, 2.75, 2.73, 2.71, 2.71
-    ]).reshape(-1, 1)
-    t5 = np.array([
-        3.57, 3.69, 3.7, 3.77, 3.77, 3.73, 3.72, 3.74, 3.77,
-        3.75, 3.77, 3.76, 3.75, 3.72, 3.71
-    ]).reshape(-1, 1)
-    t10 = np.array([
-        4.63, 4.73, 4.74, 4.81, 4.8, 4.79, 4.76, 4.77, 4.8,
-        4.77, 4.8, 4.8, 4.78, 4.73, 4.73
-    ]).reshape(-1, 1)
-    T = np.hstack([t2, t3, t5, t10])
-
-    y = T[:, 1]
-    A = np.hstack([T[:, 0].reshape(-1, 1), T[:, 2:]])
-
-    olr = OLR(A, y)
-    coef = olr.least_squares_without_one(include_intercept=False)
-    res = olr.result_dict
-    print(coef)
-    # print(res)
-    error = olr.least_squares_error()
-    print(error)
+    # t2 = np.array([
+    #     1.69, 1.81, 1.81, 1.79, 1.79, 1.83, 1.81, 1.81, 1.83,
+    #     1.81, 1.82, 1.82, 1.8, 1.78, 1.79
+    # ]).reshape(-1, 1)
+    # t3 = np.array([
+    #     2.58, 2.71, 2.72, 2.78, 2.77, 2.75, 2.71, 2.72, 2.76,
+    #     2.73, 2.75, 2.75, 2.73, 2.71, 2.71
+    # ]).reshape(-1, 1)
+    # t5 = np.array([
+    #     3.57, 3.69, 3.7, 3.77, 3.77, 3.73, 3.72, 3.74, 3.77,
+    #     3.75, 3.77, 3.76, 3.75, 3.72, 3.71
+    # ]).reshape(-1, 1)
+    # t10 = np.array([
+    #     4.63, 4.73, 4.74, 4.81, 4.8, 4.79, 4.76, 4.77, 4.8,
+    #     4.77, 4.8, 4.8, 4.78, 4.73, 4.73
+    # ]).reshape(-1, 1)
+    # T = np.hstack([t2, t3, t5, t10])
+    #
+    # y = T[:, 1]
+    # A = np.hstack([T[:, 0].reshape(-1, 1), T[:, 2:]])
+    #
+    # olr = OLR(A, y)
+    # coef = olr.least_squares_without_one(include_intercept=False)
+    # res = olr.result_dict
+    # print(coef)
+    # # print(res)
+    # error = olr.least_squares_error()
+    # print(error)
 
     # A_ = olr.x[:, :-1]
     # olr.result_dict = {}
@@ -540,3 +541,28 @@ if __name__ == "__main__":
     #     [0.2 ** 2, 0.2 * 0.15 * 0.25],
     #     [0.2 * 0.15 * 0.25, 0.15 ** 2]
     # ])
+
+    # Trading days
+    # nyse = mcal.get_calendar('NYSE')
+    # early = nyse.schedule(start_date='2017-03-16', end_date='2017-09-29')
+    # res = mcal.date_range(early, frequency='1D')
+    # print(len(res))
+
+    # nyse = mcal.get_calendar('HKEX')
+    # res = nyse.valid_days(start_date='2022-06-01', end_date='2022-06-30')
+    # print(res)
+    # print(len(res))
+    # early = nyse.schedule(start_date='2022-06-01', end_date='2022-06-30')
+    # res = mcal.date_range(early, frequency='1D')
+    # print(len(res))
+    # nasdaq = mcal.get_calendar('NASDAQ')
+    # early = nasdaq.schedule(start_date='2022-06-01', end_date='2022-06-30')
+    # res = mcal.date_range(early, frequency='1D')
+    # print(len(res))
+    # hkex = mcal.get_calendar('HKEX')
+    # early = hkex.schedule(start_date='2022-06-01', end_date='2022-06-30')
+    # res = mcal.date_range(early, frequency='1D')
+    # print(len(res))
+
+    date_list = trading_days_computation("HKEX", '2022-06-01', '2022-06-30', "int")
+    print(date_list)
