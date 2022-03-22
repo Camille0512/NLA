@@ -355,16 +355,20 @@ if __name__ == "__main__":
     # ]
     # A += [[1, -1500], [1, -1550], [1, -1575], [1, -1600]]
     # A = np.array(A)
+    # print(A)
     # y = np.array([
     #     178.8, 154, 129.05, 104.2, 79, 54, 29.05, 4.25,
     #     -20.4, -45.45, -70.3, -95.95, -144.7, -195, -219.8, -244.5
     # ])
     # olr = OLR(A, y)
-    # x = olr.least_squares(A, y)
+    # x = olr.least_squares_with_one(A, y)
+    # x = np.array([round(x[0], 2), round(x[1], 4)])
     # print(x)
     # iv = olr.implied_volatility(option_prices={"call": 225.4, "put": 46.6}, X=1175, t=199/252)
     # print(iv)
     # iv = olr.implied_volatility(option_prices={"call": 131.7, "put": 77.7}, X=1300, t=199/252)
+    # print(iv)
+    # iv = olr.implied_volatility(option_prices={"call": 7.9, "put": 252.4}, X=1600, t=199/252)
     # print(iv)
 
     # # Question 15
@@ -391,43 +395,43 @@ if __name__ == "__main__":
     # ])
     #
     # olr = OLR(A[:, 1:], y)
-    # c = olr.least_squares_nla()
+    # c = olr.least_squares_without_one()
     # print(c)
     # # print(olr.result_dict)
     # error = olr.least_squares_error()
     # print(error)
 
-    # # Question 16
-    mu = np.array([0.02, 0.0175, 0.025, 0.015])
-    cov_matrix = np.array([
-        [0.09, 0.01, 0.03, -0.015],
-        [0.01, 0.0625, -0.02, -0.01],
-        [0.03, -0.02, 0.1225, 0.02],
-        [-0.015, -0.01, 0.02, 0.0576]
-    ])
-    emu, rf = 0.0225, 0.01
-    # print(mu)
+    # # # Question 16
+    # mu = np.array([0.02, 0.0175, 0.025, 0.015])
+    # cov_matrix = np.array([
+    #     [0.09, 0.01, 0.03, -0.015],
+    #     [0.01, 0.0625, -0.02, -0.01],
+    #     [0.03, -0.02, 0.1225, 0.02],
+    #     [-0.015, -0.01, 0.02, 0.0576]
+    # ])
+    # emu, rf = 0.0225, 0.01
+    # # print(mu)
+    # #
+    # po = PortfolioOptimize(mu, cov_matrix)
+    # w = po.min_variance_weights(emu, rf)
+    # sigma = po.min_variance_std(emu, rf)
+    # print("Weights:", w)
+    # print("Sigma:", sigma)
+    # w_tan, w_cash, w = po.min_var_tangency(emu, rf)
+    # print("Tangency weights:", w_tan)
+    # print("Cash weighting:", w_cash)
+    # print("Asset weighting:", w)
     #
-    po = PortfolioOptimize(mu, cov_matrix)
-    w = po.min_variance_weights(emu, rf)
-    sigma = po.min_variance_std(emu, rf)
-    print("Weights:", w)
-    print("Sigma:", sigma)
-    w_tan, w_cash, w = po.min_var_tangency(emu, rf)
-    print("Tangency weights:", w_tan)
-    print("Cash weighting:", w_cash)
-    print("Asset weighting:", w)
-
-    w, w_cash = po.max_return_weights(0.27, rf)
-    print("Asset weight:", w)
-    print("Cash weight:", w_cash)
-    p_mu = po.max_return_mu(0.27, 0.01)
-    print("Portfolio return:", p_mu)
-
-    w_tan, w_cash, w = po.max_return_tangency(0.27, rf)
-    print("Tangency weights:", w_tan)
-    print("Cash weighting:", w_cash)
-    print("Asset weighting:", w)
+    # w, w_cash = po.max_return_weights(0.27, rf)
+    # print("Asset weight:", w)
+    # print("Cash weight:", w_cash)
+    # p_mu = po.max_return_mu(0.27, 0.01)
+    # print("Portfolio return:", p_mu)
+    #
+    # w_tan, w_cash, w = po.max_return_tangency(0.27, rf)
+    # print("Tangency weights:", w_tan)
+    # print("Cash weighting:", w_cash)
+    # print("Asset weighting:", w)
 
     # Question 17
     # T = np.array([
@@ -448,34 +452,35 @@ if __name__ == "__main__":
     #     [4.79, 4.71, 4.71, 4.73]
     # ])
 
-    # t2 = np.array([
-    #     1.69, 1.81, 1.81, 1.79, 1.79, 1.83, 1.81, 1.81, 1.83,
-    #     1.81, 1.82, 1.82, 1.8, 1.78, 1.79
-    # ]).reshape(-1, 1)
-    # t3 = np.array([
-    #     2.58, 2.71, 2.72, 2.78, 2.77, 2.75, 2.71, 2.72, 2.76,
-    #     2.73, 2.75, 2.75, 2.73, 2.71, 2.71
-    # ]).reshape(-1, 1)
-    # t5 = np.array([
-    #     3.57, 3.69, 3.7, 3.77, 3.77, 3.73, 3.72, 3.74, 3.77,
-    #     3.75, 3.77, 3.76, 3.75, 3.72, 3.71
-    # ]).reshape(-1, 1)
-    # t10 = np.array([
-    #     4.63, 4.73, 4.74, 4.81, 4.8, 4.79, 4.76, 4.77, 4.8,
-    #     4.77, 4.8, 4.8, 4.78, 4.73, 4.73
-    # ]).reshape(-1, 1)
-    # T = np.hstack([t2, t3, t5, t10])
+    t2 = np.array([
+        1.69, 1.81, 1.81, 1.79, 1.79, 1.83, 1.81, 1.81, 1.83,
+        1.81, 1.82, 1.82, 1.8, 1.78, 1.79
+    ]).reshape(-1, 1)
+    t3 = np.array([
+        2.58, 2.71, 2.72, 2.78, 2.77, 2.75, 2.71, 2.72, 2.76,
+        2.73, 2.75, 2.75, 2.73, 2.71, 2.71
+    ]).reshape(-1, 1)
+    t5 = np.array([
+        3.57, 3.69, 3.7, 3.77, 3.77, 3.73, 3.72, 3.74, 3.77,
+        3.75, 3.77, 3.76, 3.75, 3.72, 3.71
+    ]).reshape(-1, 1)
+    t10 = np.array([
+        4.63, 4.73, 4.74, 4.81, 4.8, 4.79, 4.76, 4.77, 4.8,
+        4.77, 4.8, 4.8, 4.78, 4.73, 4.73
+    ]).reshape(-1, 1)
+    T = np.hstack([t2, t3, t5, t10])
 
-    # y = T[:, 1]
-    # A = np.hstack([T[:, 0].reshape(-1, 1), T[:, 2:]])
-    # olr = OLR(A, y)
-    # coef = olr.least_squares_nla()
-    # res = olr.result_dict
-    # print(coef)
-    # # print(res)
-    # error = olr.least_squares_error()
-    # print(error)
-    #
+    y = T[:, 1]
+    A = np.hstack([T[:, 0].reshape(-1, 1), T[:, 2:]])
+
+    olr = OLR(A, y)
+    coef = olr.least_squares_without_one(include_intercept=False)
+    res = olr.result_dict
+    print(coef)
+    # print(res)
+    error = olr.least_squares_error()
+    print(error)
+
     # A_ = olr.x[:, :-1]
     # olr.result_dict = {}
     # olr.result_dict["coefficient"] = np.array([[0], [2 / 3], [1 / 3]])
@@ -511,7 +516,7 @@ if __name__ == "__main__":
     # # print(y)
     #
     # olr = OLR(A, y)
-    # coef = olr.least_squares(solver="linalg")
+    # coef = olr.least_squares_with_one(solver="linalg")
     # print(coef)
     #
     # t = (datetime.strptime("2017-09-29", "%Y-%m-%d") - datetime.strptime("2017-03-16", "%Y-%m-%d")).days
@@ -529,9 +534,9 @@ if __name__ == "__main__":
     #     iv_df.loc[len(iv_df)] = [X, val["call"], val["put"]]
     # print(iv_df)
 
-    # Question 19
-    mu = np.array([0.08, 0.04]).reshape(-1, 1)
-    cov = np.array([
-        [0.2 ** 2, 0.2 * 0.15 * 0.25],
-        [0.2 * 0.15 * 0.25, 0.15 ** 2]
-    ])
+    # # Question 19
+    # mu = np.array([0.08, 0.04]).reshape(-1, 1)
+    # cov = np.array([
+    #     [0.2 ** 2, 0.2 * 0.15 * 0.25],
+    #     [0.2 * 0.15 * 0.25, 0.15 ** 2]
+    # ])

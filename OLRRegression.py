@@ -16,9 +16,9 @@ class OLR(Cholesky):
         self.d1 = None
         self.d2 = None
 
-    def least_squares(self, x=None, y=None, solver="Cholesky"):
+    def least_squares_with_one(self, x=None, y=None, solver="Cholesky"):
         """
-        Solving the coefficient of a linear system by given input variables.
+        Solving the coefficient of a linear system by given input variables which includes ones vector.
         :param x: A 2-D array with column as feature dimension and row as sample dimension.
         :param y: The target 1-D array.
         :return: The estimated coefficient array for the linear system.
@@ -40,11 +40,12 @@ class OLR(Cholesky):
         self.result_dict["coefficient"] = coefficient
         return coefficient.reshape(1, -1)[0]
 
-    def least_squares_nla(self, A=None, y=None):
+    def least_squares_without_one(self, A=None, y=None, include_intercept=True):
         """
-        Solving the coefficient of a linear system by given input variables.
+        Solving the coefficient of a linear system by given input variables which do not include ones vector.
         :param A: A 2-D array with column as feature dimension and row as sample dimension, without 1 vector.
         :param y: The target 1-D array.
+        :param include_intercept: Whether to add intercept to the input data, default True.
         :return: The estimated coefficient array for the linear system, and the computation result during the process.
         """
         if A is None:
@@ -58,17 +59,21 @@ class OLR(Cholesky):
             else:
                 y = deepcopy(self.y)
         A = A.reshape(max(A.shape), -1)
-        cov_A = cov(A.T)
-        sigma = []
-        for series in A.T:
-            covariance = cov(y.reshape(1, -1), series)
-            sigma.append(covariance[0][1])
-        sigma = array(sigma).reshape(-1, 1)
+        cov_A, mu_A = cov(A.T), mean(A, axis=0)
         mu_y = mean(y)
-        mu_A = mean(A, axis=0)
-        b = dot(inv(cov_A), sigma)
-        a = mu_y - multi_dot([mu_A, inv(cov_A), sigma])
-        coefficient = vstack([a, b])
+        a, b, sigma = None, None, None
+        if include_intercept:
+            A = hstack([ones(A.shape[0]).reshape(-1, 1), A])
+            coefficient = array(self.compute_single_linear_system(b=dot(A.T, y), A=dot(A.T, A)))
+        else:
+            sigma = []
+            for series in A.T:
+                covariance = cov(y.reshape(1, -1), series)
+                sigma.append(covariance[0][1])
+            sigma = array(sigma).reshape(-1, 1)
+            b = dot(inv(cov_A), sigma)
+            a = mu_y - multi_dot([mu_A, inv(cov_A), sigma])
+            coefficient = vstack([a, b])
         self.result_dict = {
             "a": a,
             "b": b,
@@ -128,8 +133,9 @@ class OLR(Cholesky):
     def _compute_option_price(self, initial: float, price: float, X: float, PVF: float, disc: float, t: float,
                               cate="call", function="Norm"):
         val = initial * sqrt(t)
-        self.d1 = log(PVF / X * disc) / (val) + (val) / 2
-        self.d2 = self.d1 - val
+        self.d1 = log(PVF / X * disc) / val + val / 2
+        self.d2 = log(PVF / X * disc) / val - val / 2
+        # self.d2 = self.d1 - val
         if function == "Norm":
             func = norm.cdf
         elif function == "polya":
@@ -138,7 +144,7 @@ class OLR(Cholesky):
             f = PVF * func(self.d1) - X * disc * func(self.d2) - price
         else:
             f = X * disc * func(-self.d2) - PVF * func(-self.d1) - price
-        f_ = PVF * sqrt(t / 2 * pi) * exp(-(self.d1) ** 2 / 2)
+        f_ = PVF * sqrt(t / 2 * pi) * exp(-self.d1 ** 2 / 2)
         return f, f_
 
     def implied_volatility(self, option_prices: dict, X: float, t: float, initial=0.25, threshold=0.000001,
@@ -157,14 +163,14 @@ class OLR(Cholesky):
         PVF, disc = coefficient.ravel()[0], coefficient.ravel()[1]
         c, p = option_prices["call"], option_prices["put"]
         pre_call, call = initial - 1, initial
-        while abs(pre_call - call) > threshold:
-            f_c, f_ = self._compute_option_price(call, c, X, PVF, disc, t, cate="call", function=function)
+        while abs(call - pre_call) > threshold:
             pre_call = call
+            f_c, f_ = self._compute_option_price(call, c, X, PVF, disc, t, cate="call", function=function)
             call -= f_c / f_
         pre_put, put = initial - 1, initial
-        while abs(pre_put - put) > threshold:
-            f_p, f_ = self._compute_option_price(put, p, X, PVF, disc, t, cate="put", function=function)
+        while abs(put - pre_put) > threshold:
             pre_put = put
+            f_p, f_ = self._compute_option_price(put, p, X, PVF, disc, t, cate="put", function=function)
             put -= f_p / f_
         options = {X: {"call": call, "put": put}}
         return options
