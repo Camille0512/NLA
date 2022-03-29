@@ -287,7 +287,7 @@ class Cholesky(LU):
             raise ValueError("Please input matrix A.")
         for j in range(inx, self.n):
             for k in range(j, self.n):
-                A[j][k] = A[j][k] - self.U[inx - 1][j] * self.U[inx - 1][k]
+                A[j][k] = float(A[j][k] - self.U[inx - 1][j] * self.U[inx - 1][k])
         return A
 
     def Cholesky_decomposition(self, A=None):
@@ -306,6 +306,7 @@ class Cholesky(LU):
             raise ValueError("The matrix cannot be implemented Cholesky decomposition.")
         self.U = self.create_clean_matrix()
 
+        A = A.astype(float)
         for i in range(1, self.n):
             self.U = self.compute_U(A=A, inx=i)
             A = self._update_A(A=A, inx=i)
@@ -326,6 +327,7 @@ class Cholesky(LU):
             A = deepcopy(self.A)
         if self.n is None:
             self.n = A.shape[0]
+        A = A.astype(float)
         if U is None:
             self.U = self.Cholesky_decomposition(deepcopy(A))
         else:
@@ -350,10 +352,12 @@ class Cholesky(LU):
             A = deepcopy(self.A)
         if self.n is None:
             self.n = self.A.shape[0]
+        A = A.astype(float)
 
         if not given_U:
             self.U = self.Cholesky_decomposition(A)
         B = array(deepcopy(B)).reshape(-1, 1)
+        B = B.astpye(float)
         s = B.shape[1]
         X = diag(zeros(s))
         for e, b in enumerate(B):
@@ -637,12 +641,13 @@ class OnePeriodMarketModel(LU):
 
     def option_pricing_model(self, M=None, S0=None, options=None, update=True):
         """
-        Get the option pricing model by given payoff matrix, St0, and selected options.
+        Get the option pricing model by using payoff matrix, St0, and selected options.
         :param M: The payoff matrix. Can be computed or given directly.
         :param S0: The price vector at time 0. Should be given or initiated.
         :param options: The option type information (array).
         :param update: Whether update the class variable (payoff matrix).
         :return: The pricing model vector Q, and whether it is arbitrage free.
+            Q is the discounted value of the expected cash flow.
         """
         af = True
         if M is None:

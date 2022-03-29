@@ -153,10 +153,13 @@ if __name__ == "__main__":
     # disc_factor = [0.998, 0.9935, 0.982, 0.9775]
     # ps = [2, 5, 11, 15]
     # zr = [round(i, 6) for i in trans_discount_factor_zero_rate(disc_factor, ps, "month")]
+    # # print("zr:", zr)
     #
     # lu = EquationSimulation()
     # interval = [0, 2 / 12, 5 / 12, 11 / 12, 15 / 12]
     # fx = [0.01] + zr
+    # print(interval)
+    # print(fx)
     # x, eq = lu.cubic_spline_interpolation_lu(interval, fx)
     # print("x:\n", x)
     # print("Equation:", eq)
@@ -564,5 +567,41 @@ if __name__ == "__main__":
     # res = mcal.date_range(early, frequency='1D')
     # print(len(res))
 
-    date_list = trading_days_computation("HKEX", '2022-06-01', '2022-06-30', "int")
-    print(date_list)
+    # date_list = trading_days_computation("HKEX", '2022-06-01', '2022-06-30', "int")
+    # print(date_list)
+
+    # import os, sys
+    #
+    # # Both "die" and "clean up" will be printed.
+    # try:
+    #     sys.exit(0)
+    # except:
+    #     print("die")
+    # finally:
+    #     print("clean up")
+    #
+    # # The program just exit without printing anything.
+    # try:
+    #     os._exit(00)
+    # except:
+    #     print("die")
+    # finally:
+    #     print("os.exit")
+
+    # mu = np.array([0.046, 0.055, 0.064, 0.073])
+    # cov = np.array([
+    #     [0.0576, -0.025, 0.025, -0.015],
+    #     [-0.025, 0.09, -0.025, -0.035],
+    #     [0.025, -0.025, 0.1024, 0.055],
+    #     [-0.015, -0.035, 0.055, 0.1296]
+    # ])
+    # rf = 0.025
+    #
+    # po = PortfolioOptimize(mu, cov)
+    # w_tan = po.tangency_portfolip(rf)
+    # print(w_tan)
+
+    A = np.array([[9, -1], [-1, 4]])
+    cl = Cholesky(A=A)
+    u = cl.Cholesky_decomposition()
+    print(u)

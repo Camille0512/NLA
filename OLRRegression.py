@@ -33,6 +33,8 @@ class OLR(Cholesky):
                 raise ValueError("Please input dependent data.")
             else:
                 y = deepcopy(self.y)
+
+        x, y = x.astype(float), y.astype(float)
         if solver == "Cholesky":
             coefficient = array(self.compute_single_linear_system(b=dot(x.T, y), A=dot(x.T, x)))
         else:
@@ -58,6 +60,8 @@ class OLR(Cholesky):
                 raise ValueError("Please input dependent data.")
             else:
                 y = deepcopy(self.y)
+
+        A, y = A.astype(float), y.astype(float)
         A = A.reshape(max(A.shape), -1)
         cov_A, mu_A = cov(A.T), mean(A, axis=0)
         mu_y = mean(y)
