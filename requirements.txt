@@ -28,7 +28,6 @@ numpy
 packaging
 pandas
 patsy
-pmdarima
 prometheus-client
 prometheus-flask-exporter
 protobuf
