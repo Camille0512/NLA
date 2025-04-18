@@ -1,6 +1,6 @@
 properties([
-//     pipelineTriggers([githubPush()])
-    pipelineTriggers([githubPullRequests()])
+    pipelineTriggers([githubPush()])
+//     pipelineTriggers([githubPullRequests()])
 ])
 
 // // Not figured out yet
@@ -24,19 +24,18 @@ pipeline {
         stage('Checkout PR') {
             steps {
                 sh 'echo "Start PR checkout"'
-                checkout scm
-//                 checkout([
-//                     $class: 'GitSCM',
-//                     branches: [[name: 'refs/heads/develop']], // ${sha1}
-//                     extensions: [
-//                         [$class: 'CloneOption', depth: 1, shallow: true]
-//                     ],
-//                     userRemoteConfigs: [[
-//                         url: 'https://github.com/Camille0512/NLA.git',
-//                         credentialsId: 'jenkins_nla',
-//                         refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
-//                     ]]
-//                 ])
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: 'refs/heads/develop']], // ${sha1}
+                    extensions: [
+                        [$class: 'CloneOption', depth: 1, shallow: true]
+                    ],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/Camille0512/NLA.git',
+                        credentialsId: 'jenkins_nla',
+                        refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
+                    ]]
+                ])
                 sh 'echo "Finish PR checkout"'
             }
         }
