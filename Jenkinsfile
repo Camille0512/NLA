@@ -1,15 +1,18 @@
-pipeline {
-    agent any
-    triggers {
-        githubPullRequests(
+properties([
+    pipelineTriggers([
+        [
+            $class: 'GitHubPRTrigger',
             events: [
                 [$class: 'GitHubPRPushEvent'],
                 [$class: 'GitHubPRCommentEvent']
             ],
             cancelQueued: false
-        )
-    }
+        ]
+    ])
+])
 
+pipeline {
+    agent any
     stages {
         stage('Checkout PR') {
             steps {
@@ -25,6 +28,7 @@ pipeline {
                         refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
                     ]]
                 ])
+                sh 'echo "Finish PR checkout"'
             }
         }
 
@@ -32,6 +36,7 @@ pipeline {
             steps {
                 sh 'pytest lu_decomposition_test.py'
                 junit '**/JenkinsLogs/surefire-reports/*.xml'
+                sh 'echo "Finish Build & Test"'
             }
         }
     }
