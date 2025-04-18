@@ -1,7 +1,7 @@
 pipeline {
     agent any
     triggers {
-        githubPullRequest(
+        githubPullRequests(
             events: [
                 [$class: 'GitHubPRPushEvent'],
                 [$class: 'GitHubPRCommentEvent']
