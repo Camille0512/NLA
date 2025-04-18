@@ -4,9 +4,13 @@ properties([
 
 pipeline {
     agent any
+    tools {
+        git 'Default'  // Uses the Git tool configured in Jenkins Global Tools
+    }
     stages {
         stage('Checkout PR') {
             steps {
+                sh 'echo "Start PR checkout"'
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: '${sha1}']],
