@@ -1,17 +1,19 @@
-// properties([
-//     pipelineTriggers([githubPullRequests()]) // githubPush()
-// ])
-
 properties([
-    pipelineTriggers([
-        [
-            $class: 'GitHubPRTrigger',
-            events: [
-                [$class: 'GitHubPROpenEvent']
-            ]
-        ]
-    ])
+//     pipelineTriggers([githubPush()])
+    pipelineTriggers([githubPullRequests()])
 ])
+
+// // Not figured out yet
+// properties([
+//     pipelineTriggers([
+//         [
+//             $class: 'GitHubPRTrigger',
+//             events: [
+//                 [$class: 'GitHubPROpenEvent']
+//             ]
+//         ]
+//     ])
+// ])
 
 pipeline {
     agent any
@@ -22,18 +24,19 @@ pipeline {
         stage('Checkout PR') {
             steps {
                 sh 'echo "Start PR checkout"'
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '${sha1}']], // refs/heads/develop
-                    extensions: [
-                        [$class: 'CloneOption', depth: 1, shallow: true]
-                    ],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/Camille0512/NLA.git',
-                        credentialsId: 'jenkins_nla',
-                        refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
-                    ]]
-                ])
+                checkout scm
+//                 checkout([
+//                     $class: 'GitSCM',
+//                     branches: [[name: 'refs/heads/develop']], // ${sha1}
+//                     extensions: [
+//                         [$class: 'CloneOption', depth: 1, shallow: true]
+//                     ],
+//                     userRemoteConfigs: [[
+//                         url: 'https://github.com/Camille0512/NLA.git',
+//                         credentialsId: 'jenkins_nla',
+//                         refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
+//                     ]]
+//                 ])
                 sh 'echo "Finish PR checkout"'
             }
         }
