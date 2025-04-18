@@ -42,8 +42,11 @@ pipeline {
 
         stage('Build & Test') {
             steps {
-                sh 'source /Users/camilleli/Programs/venv/bin/activate'
-                sh 'pytest lu_decomposition_test.py'
+                sh '''
+                    python3 -m pip install --upgrade pip
+                    pip3 install pytest
+                    python3 -m pytest --junitxml=./JenkinsLogs/surefire-reports/test-results.xml
+                '''
                 junit '**/JenkinsLogs/surefire-reports/*.xml'
                 sh 'echo "Finish Build & Test"'
             }
