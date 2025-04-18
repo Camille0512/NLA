@@ -1,5 +1,16 @@
+// properties([
+//     pipelineTriggers([githubPullRequests()]) // githubPush()
+// ])
+
 properties([
-    pipelineTriggers([githubPush()]) // githubPullRequest()
+    pipelineTriggers([
+        [
+            $class: 'GitHubPRTrigger',
+            events: [
+                [$class: 'GitHubPROpenEvent']
+            ]
+        ]
+    ])
 ])
 
 pipeline {
@@ -13,14 +24,14 @@ pipeline {
                 sh 'echo "Start PR checkout"'
                 checkout([
                     $class: 'GitSCM',
-                    branches: [[name: 'refs/heads/develop']],
+                    branches: [[name: '${sha1}']], // refs/heads/develop
                     extensions: [
                         [$class: 'CloneOption', depth: 1, shallow: true]
                     ],
                     userRemoteConfigs: [[
                         url: 'https://github.com/Camille0512/NLA.git',
-                        credentialsId: 'github-token',
-                        refspec: '+refs/pull/${ghprbPullId}/*:refs/remotes/origin/pr/${ghprbPullId}/*'
+                        credentialsId: 'jenkins_nla',
+                        refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
                     ]]
                 ])
                 sh 'echo "Finish PR checkout"'
@@ -29,6 +40,7 @@ pipeline {
 
         stage('Build & Test') {
             steps {
+                sh 'source /Users/camilleli/Programs/venv/bin/activate'
                 sh 'pytest lu_decomposition_test.py'
                 junit '**/JenkinsLogs/surefire-reports/*.xml'
                 sh 'echo "Finish Build & Test"'
