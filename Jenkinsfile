@@ -29,7 +29,7 @@ stages {
     stage('Build & Test') {
         steps {
             sh 'pytest lu_decomposition_test.py'
-            junit '**/target/surefire-reports/*.xml'
+            junit '**/JenkinsLogs/surefire-reports/*.xml'
         }
     }
 }
