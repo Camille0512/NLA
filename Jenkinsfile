@@ -1,14 +1,5 @@
 properties([
-    pipelineTriggers([
-        [
-            $class: 'GitHubPRTrigger',
-            events: [
-                [$class: 'GitHubPRPushEvent'],
-                [$class: 'GitHubPRCommentEvent']
-            ],
-            cancelQueued: false
-        ]
-    ])
+    pipelineTriggers([githubPush()])
 ])
 
 pipeline {
