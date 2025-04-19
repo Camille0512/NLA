@@ -24,6 +24,7 @@ pipeline {
         GIT_BRANCH = 'refs/heads/develop'
         GIT_URL = 'https://github.com/Camille0512/NLA.git'
         JENKINS_CREDENTIAL_ID = 'jenkins_nla'
+        JENKINS_LOG = sh(script: 'JENKINS_LOG', returnStdout: true).trim()
         DATETIME = sh(script: 'date +"%Y%m%d_%H%M%S"', returnStdout: true).trim()
     }
     stages {
@@ -51,7 +52,8 @@ pipeline {
                 sh '''
                     python3 -m pip install --upgrade pip
                     pip3 install pytest
-                    python3 -m pytest --junitxml=./JenkinsLogs/surefire-reports/${DATETIME}_test-results.xml
+                    python3 -m pytest --junitxml=${JENKINS_LOG}/JenkinsLogs/surefire-reports/${DATETIME}_sample_test-results.xml
+                    python3 -m pytest --junitxml=${JENKINS_LOG}/JenkinsLogs/surefire-reports/${DATETIME}_lu_decomposition_test-results.xml
                 '''
                 junit '**/JenkinsLogs/surefire-reports/*.xml'
                 sh 'echo "Finish Build & Test"'

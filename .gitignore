@@ -2,5 +2,6 @@
 /venv/
 .DS_Store
 .idea/
-tests/__pycache__/
-src/tests/__pycache__/
+TestNlaFuncs/__pycache__/
+TestNlaFuncs/__pycache__/
+src/__pycache__/

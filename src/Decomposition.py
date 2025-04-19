@@ -4,6 +4,9 @@ from numpy import array, dot, diag, zeros, log, exp, ones, matrix, append, aroun
 import matplotlib.pyplot as plt
 from pandas import DataFrame
 
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent))  # Adds the current dir to Python path
 import Verifications as v
 
 
@@ -220,7 +223,7 @@ class LU:
         """
         cate_list = cate.split("_")
         func = self.discount_factor_comp[cate_list[0]]
-        return func(cate_list[1], M, b) if len(cate_list) > 1 is not None else func(M, b)
+        return func(cate_list[1], M, b) if cate_list is not None and len(cate_list) > 1 else func(M, b)
 
     def compute_linear_system(self, B: list, A=None, givenLU=False):
         """
