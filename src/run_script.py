@@ -18,18 +18,18 @@ np.set_printoptions(suppress=True)
 #  or class, they might have errors if run directly.)
 
 if __name__ == "__main__":
-    # # Question 1
-    # lu = LU()
-    #
-    # L = [
-    #     [100, 0, 0, 0],
-    #     [2, 102, 0, 0],
-    #     [3, 3, 103, 0],
-    #     [2, 2, 2, 102]
-    # ]
-    # b = [98.75, 102, 103.5, 105.5]
-    # x = lu.forward_substitution(L, b)
-    # print(x)
+    # Question 1
+    lu = LU()
+
+    L = [
+        [100, 0, 0, 0],
+        [2, 102, 0, 0],
+        [3, 3, 103, 0],
+        [2, 2, 2, 102]
+    ]
+    b = [98.75, 102, 103.5, 105.5]
+    x = lu.forward_substitution(L, b)
+    print(x)
     #
     # L = [
     #     [100, 0, 0, 0],
