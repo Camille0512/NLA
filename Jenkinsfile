@@ -57,7 +57,6 @@ pipeline {
                             source venv/bin/activate
                             python3 -m pytest --junitxml=${JENKINS_LOG}/JenkinsLogs/surefire-reports/${DATETIME}_sample_test-results.xml
                         '''
-//                         junit '${JENKINS_LOG}/JenkinsLogs/surefire-reports/${DATETIME}_sample_test-results.xml'
                         sh 'echo "Finish Sample Test"'
                     }
                 }
@@ -69,7 +68,6 @@ pipeline {
                             source venv/bin/activate
                             python3 -m pytest --junitxml=${JENKINS_LOG}/JenkinsLogs/surefire-reports/${DATETIME}_lu_decomposition_test-results.xml
                         '''
-//                         junit '${JENKINS_LOG}/JenkinsLogs/surefire-reports/${DATETIME}_lu_decomposition_test-results.xml'
                         sh 'echo "Finish LU Decomposition Test"'
                     }
                 }

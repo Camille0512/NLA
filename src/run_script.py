@@ -30,17 +30,17 @@ if __name__ == "__main__":
     b = [98.75, 102, 103.5, 105.5]
     x = lu.forward_substitution(L, b)
     print(x)
-    #
-    # L = [
-    #     [100, 0, 0, 0],
-    #     [6, 106, 0, 0],
-    #     [8, 8, 108, 0],
-    #     [5, 5, 5, 105]
-    # ]
-    # b = [98, 104, 111, 102]
-    # x = lu.forward_substitution(L, b)
-    # print("Forward decomposition")
-    # print(x)
+
+    L = [
+        [100, 0, 0, 0],
+        [6, 106, 0, 0],
+        [8, 8, 108, 0],
+        [5, 5, 5, 105]
+    ]
+    b = [98, 104, 111, 102]
+    x = lu.forward_substitution(L, b)
+    print("Forward decomposition")
+    print(x)
     # print("")
     #
     # U = [i[::-1] for i in L][::-1]
