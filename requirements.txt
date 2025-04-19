@@ -27,11 +27,13 @@ multitasking
 numpy
 packaging
 pandas
+pandas_market_calendars
 patsy
 prometheus-client
 prometheus-flask-exporter
 protobuf
 pyparsing
+pytest
 python-dateutil
 python-editor
 pytz
