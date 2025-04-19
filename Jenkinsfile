@@ -1,29 +1,20 @@
 properties([
     pipelineTriggers([githubPush()])
-//     pipelineTriggers([githubPullRequests()])
 ])
-
-// // Not figured out yet
-// properties([
-//     pipelineTriggers([
-//         [
-//             $class: 'GitHubPRTrigger',
-//             events: [
-//                 [$class: 'GitHubPROpenEvent']
-//             ]
-//         ]
-//     ])
-// ])
 
 pipeline {
     agent any
     tools {
         git 'Default'  // Uses the Git tool configured in Jenkins Global Tools
     }
+    triggers {
+        pollSCM('H/5 * * * *')  // Check every 5 mins
+    }
     environment {
         GIT_BRANCH = 'refs/heads/develop'
         GIT_URL = 'https://github.com/Camille0512/NLA.git'
         JENKINS_CREDENTIAL_ID = 'jenkins_nla'
+        JENKINS_LOG = '/Users/camilleli/Programs/NLA_new/NLA'
         DATETIME = sh(script: 'date +"%Y%m%d_%H%M%S"', returnStdout: true).trim()
     }
     stages {
@@ -45,16 +36,48 @@ pipeline {
                 sh 'echo "Finish PR checkout"'
             }
         }
-
-        stage('Build & Test') {
+        stage('Build') {
             steps {
+                sh 'echo "Start Build"'
                 sh '''
+                    python3 -m venv venv
+                    source venv/bin/activate
                     python3 -m pip install --upgrade pip
-                    pip3 install pytest
-                    python3 -m pytest --junitxml=./JenkinsLogs/surefire-reports/${DATETIME}_test-results.xml
+                    pip3 install -r requirements.txt
                 '''
-                junit '**/JenkinsLogs/surefire-reports/*.xml'
-                sh 'echo "Finish Build & Test"'
+                sh 'echo "Finish Build"'
+            }
+        }
+        stage('Test') {
+            parallel {
+                stage('Sample Test') {
+                    steps {
+                        sh 'echo "Start Sample Test"'
+                        sh '''
+                            source venv/bin/activate
+                            python3 -m pytest --junitxml=${JENKINS_LOG}/JenkinsLogs/surefire-reports/${DATETIME}_sample_test-results.xml
+                        '''
+//                         junit '${JENKINS_LOG}/JenkinsLogs/surefire-reports/${DATETIME}_sample_test-results.xml'
+                        sh 'echo "Finish Sample Test"'
+                    }
+                }
+                stage('LU Decomposition Test') {
+                    steps {
+                        sh 'echo "Start LU Decomposition Test"'
+                        sh 'ls -la ${JENKINS_LOG}/JenkinsLogs/surefire-reports/'
+                        sh '''
+                            source venv/bin/activate
+                            python3 -m pytest --junitxml=${JENKINS_LOG}/JenkinsLogs/surefire-reports/${DATETIME}_lu_decomposition_test-results.xml
+                        '''
+//                         junit '${JENKINS_LOG}/JenkinsLogs/surefire-reports/${DATETIME}_lu_decomposition_test-results.xml'
+                        sh 'echo "Finish LU Decomposition Test"'
+                    }
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo "🚀 Deploying..."
             }
         }
     }

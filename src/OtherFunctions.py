@@ -1,9 +1,17 @@
-from numpy.linalg import det, eig, multi_dot
-from numpy import matrix, array, mean, dot, diag, sqrt
-from math import sin, cos, pi
-from collections import defaultdict
-from Verifications import check_root
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent))  # Adds the current dir to Python path
+
 import pandas_market_calendars as mcal
+from collections import defaultdict
+from math import sin, cos, pi
+from numpy import array
+from numpy import diag
+from numpy import dot
+from numpy import mean
+from numpy import sqrt
+from numpy.linalg import multi_dot
+from Verifications import check_root
 
 
 def compute_tri_diagonal_symmetric(d: int, a: int, n: int, digit=6):
