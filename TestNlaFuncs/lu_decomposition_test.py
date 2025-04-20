@@ -32,6 +32,16 @@ def test_forward_substitution():
     x = utils.matrix_formatter(lu.forward_substitution(L, b), 1)
     assert x == [0.9875, 0.9806, 0.9475, 0.9771]
 
+    L = [
+        [100, 0, 0, 0],
+        [6, 106, 0, 0],
+        [8, 8, 108, 0],
+        [5, 5, 5, 105]
+    ]
+    b = [98, 104, 111, 102]
+    x = utils.matrix_formatter(lu.forward_substitution(L, b), 1)
+    assert x == [0.98, 0.9257, 0.8866, 0.8385]
+
 
 if __name__ == "__main__":
     test_forward_substitution()
